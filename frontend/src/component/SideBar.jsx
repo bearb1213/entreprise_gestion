@@ -72,7 +72,7 @@ export default function SideBar({ active = "Dashboard", roles = null }) {
   };
 
   return (
-    <div className="w-64 bg-gradient-to-b from-gray-800 to-gray-900 text-white h-screen flex flex-col shadow-xl">
+    <div className="w-64 bg-gradient-to-b from-gray-800 to-gray-900 text-white h-screen flex flex-col shadow-xl fixed">
       <h2 className="text-xl font-bold p-5 border-b border-gray-700 flex items-center">
         <span className="bg-blue-500 p-2 rounded-lg mr-3">
           <DashboardIcon />
