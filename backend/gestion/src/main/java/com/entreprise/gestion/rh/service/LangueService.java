@@ -2,6 +2,8 @@ package com.entreprise.gestion.rh.service;
 
 import com.entreprise.gestion.rh.model.Langue;
 import com.entreprise.gestion.rh.repository.LangueRepository;
+
+import org.jspecify.annotations.Nullable;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
@@ -33,4 +35,5 @@ public class LangueService {
                         l -> l.getLibelle()
                 ));
     }
+
 }

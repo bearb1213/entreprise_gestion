@@ -2,6 +2,8 @@ package com.entreprise.gestion.rh.service;
 
 import com.entreprise.gestion.rh.model.Metier;
 import com.entreprise.gestion.rh.repository.MetierRepository;
+
+import org.jspecify.annotations.Nullable;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
@@ -33,4 +35,5 @@ public class MetierService {
                         Metier::getLibelle
                 ));
     }
+
 }

@@ -2,6 +2,8 @@ package com.entreprise.gestion.rh.service;
 
 import com.entreprise.gestion.rh.model.Competence;
 import com.entreprise.gestion.rh.repository.CompetenceRepository;
+
+// import org.jspecify.annotations.Nullable;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
@@ -33,4 +35,6 @@ public class CompetenceService {
                         c -> c.getLibelle()
                 ));
     }
+
+  
 }
