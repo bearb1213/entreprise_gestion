@@ -9,15 +9,48 @@ import org.springframework.stereotype.Service;
 
 import com.entreprise.gestion.rh.dto.ChoixDto;
 import com.entreprise.gestion.rh.dto.QuestionDto;
+import com.entreprise.gestion.rh.model.Candidature;
 import com.entreprise.gestion.rh.model.Choix;
+import com.entreprise.gestion.rh.model.Notes;
 import com.entreprise.gestion.rh.model.Question;
+import com.entreprise.gestion.rh.model.ReponseCandidat;
+import com.entreprise.gestion.rh.repository.CandidatureRepository;
+import com.entreprise.gestion.rh.repository.ChoixRepository;
+import com.entreprise.gestion.rh.repository.EvaluationRepository;
+import com.entreprise.gestion.rh.repository.NotesRepository;
 import com.entreprise.gestion.rh.repository.QuestionRepository;
+
+import jakarta.persistence.EntityNotFoundException;
 
 
 @Service
 public class QuestionService {
     @Autowired
     private QuestionRepository questionRepository;
+
+    @Autowired 
+    private CandidatureRepository candidatureRepository;
+
+    @Autowired 
+    private ChoixRepository choixRepository;
+
+    @Autowired 
+    private NotesRepository notesRepository;
+
+    @Autowired
+    private EvaluationRepository evaluationRepository;
+
+    //-- dependances de services
+    @Autowired
+    private ChoixService choixService;
+
+    @Autowired 
+    private ReponseCandidatService reponseCandidatService;
+
+    public Question findQuestionById(Integer id)
+    {
+        return questionRepository.findById(id).orElseThrow();
+    }
 
     public List<Question> getQuestionsAleatoiresParDepartement(Integer id,int nb)
     {
@@ -102,6 +135,68 @@ private QuestionDto questionToDto(Question question) {
     return dto;
 }
 
+public Float evaluateReponses(Integer idCandidature, Integer idQuestion, List<Integer> choix) throws Exception
+{
+    // Vérifier d'abord l'existence de la candidature
+    Candidature candidature = candidatureRepository.findById(idCandidature)
+        .orElseThrow(() -> new EntityNotFoundException("Candidature non trouvée avec l'ID: " + idCandidature));
+    
+    Question questionActuelle = this.findQuestionById(idQuestion);
+    
+    if(questionActuelle.getChoix().size() == choix.size()) {
+        return 0f;
+    }
+    if(choix == null || choix.size()<=0)
+    {
+        return 0f;
+    }
 
 
+    float valeurMax = 0;
+    float noteObtenue = 0;
+
+    for (Integer idChoix : choix) {
+        Choix choixObj = choixService.findChoixById(idChoix);
+        noteObtenue += choixObj.getCoeff();
+        
+        ReponseCandidat reponseCandidat = new ReponseCandidat();
+        reponseCandidat.setCandidature(candidature); // Utiliser l'objet déjà récupéré
+        reponseCandidat.setChoix(choixRepository.findById(idChoix).orElseThrow());
+        
+        reponseCandidatService.saveReponseCandidat(reponseCandidat);
+    }
+    
+    for (Choix c : questionActuelle.getChoix()) {
+        valeurMax += c.getCoeff();   
+    }
+    
+    return noteObtenue / valeurMax ;
+}
+
+public Float evaluateQuestionnaire(Integer idCandidature,List<Float> notes) throws Exception
+{
+
+    Candidature candidature = candidatureRepository.findById(idCandidature)
+        .orElseThrow(() -> new EntityNotFoundException("Candidature non trouvée avec l'ID: " + idCandidature));
+    
+    float moyenne = 0;
+    for(Float note : notes)
+    {
+        moyenne+= note;
+    }
+    moyenne = moyenne / notes.size();
+
+    System.out.println("Calcul de notes ok pour evaluation questionnaire:"+moyenne);
+    Notes note = new Notes();
+    note.setCandidature(candidature); // Utiliser l'objet déjà récupéré
+    note.setEvaluation(evaluationRepository.findById(1).orElseThrow(()-> new Exception("ID d'evaluation inexistant")));
+    System.out.println("Evaluation trouvee"); // le probleme reside ici vu qu'il n'y a encore rien dans la table Evaluation 
+    // pb: le code s'arrete directement ici sans lever une seule exception
+    note.setNote((double) moyenne);
+    note.setDateEntree(java.time.LocalDateTime.now());
+    notesRepository.save(note);
+
+
+    return moyenne;
+}
 }
