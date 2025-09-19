@@ -15,6 +15,6 @@ public class BesoinService {
     private BesoinRepository besoinRepository;
 
     public List<Besoin> findAll() { return besoinRepository.findAll(); }
-    public Optional<Besoin> findById(Long id) { return besoinRepository.findById(id); }
+    public Optional<Besoin> findById(Integer id) { return besoinRepository.findById(id); }
     public Besoin save(Besoin besoin) { return besoinRepository.save(besoin); }
 }

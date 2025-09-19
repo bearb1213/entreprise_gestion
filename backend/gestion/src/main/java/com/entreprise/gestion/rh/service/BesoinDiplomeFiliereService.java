@@ -13,6 +13,6 @@ public class BesoinDiplomeFiliereService {
     private BesoinDiplomeFiliereRepository besoinDiplomeFiliereRepository;
 
     public List<BesoinDiplomeFiliere> findAll() { return besoinDiplomeFiliereRepository.findAll(); }
-    public Optional<BesoinDiplomeFiliere> findById(Long id) { return besoinDiplomeFiliereRepository.findById(id); }
+    public Optional<BesoinDiplomeFiliere> findById(Integer id) { return besoinDiplomeFiliereRepository.findById(id); }
     public BesoinDiplomeFiliere save(BesoinDiplomeFiliere bdf) { return besoinDiplomeFiliereRepository.save(bdf); }
 }

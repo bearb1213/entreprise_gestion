@@ -15,6 +15,6 @@ public class BesoinCompetenceService {
     private BesoinCompetenceRepository besoinCompetenceRepository;
 
     public List<BesoinCompetence> findAll() { return besoinCompetenceRepository.findAll(); }
-    public Optional<BesoinCompetence> findById(Long id) { return besoinCompetenceRepository.findById(id); }
+    public Optional<BesoinCompetence> findById(Integer id) { return besoinCompetenceRepository.findById(id); }
     public BesoinCompetence save(BesoinCompetence bc) { return besoinCompetenceRepository.save(bc); }
 }

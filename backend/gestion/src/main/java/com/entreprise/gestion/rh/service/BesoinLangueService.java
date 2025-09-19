@@ -15,6 +15,6 @@ public class BesoinLangueService {
     private BesoinLangueRepository besoinLangueRepository;
 
     public List<BesoinLangue> findAll() { return besoinLangueRepository.findAll(); }
-    public Optional<BesoinLangue> findById(Long id) { return besoinLangueRepository.findById(id); }
+    public Optional<BesoinLangue> findById(Integer id) { return besoinLangueRepository.findById(id); }
     public BesoinLangue save(BesoinLangue bl) { return besoinLangueRepository.save(bl); }
 }
