@@ -1,5 +1,7 @@
 package com.entreprise.gestion.rh.controller;
 
+import com.entreprise.gestion.rh.dto.BesoinDTO;
+import com.entreprise.gestion.rh.dto.BesoinRequest;
 import com.entreprise.gestion.rh.model.Besoin;
 import com.entreprise.gestion.rh.service.BesoinService;
 import com.entreprise.gestion.rh.service.CompetenceService;
@@ -9,12 +11,14 @@ import com.entreprise.gestion.rh.service.LangueService;
 import com.entreprise.gestion.rh.service.MetierService;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.ResponseEntity;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.*;
 import java.util.List;
+import java.util.Optional;
 
 @RestController
-@RequestMapping("/besoins")
+@RequestMapping("/api/besoins")
 public class BesoinController {
 
     private final BesoinService besoinService;
@@ -39,25 +43,49 @@ public class BesoinController {
     }
 
     @GetMapping
-    public String listBesoins(Model model) {
-        model.addAttribute("besoins", besoinService.findAll());
-        return "besoin/list"; 
+    public List<Besoin> listBesoins() {
+        return besoinService.findAll();
     }
 
-    @GetMapping("/create")
-    public String showCreateForm(Model model) {
-        model.addAttribute("besoin", new Besoin());
-        model.addAttribute("metiers", metierService.getAll());
-        model.addAttribute("departements", departementService.getAllDepartements());
-        model.addAttribute("competences", competenceService.getAll());
-        model.addAttribute("langues", langueService.getAll());
-        model.addAttribute("diplomeFilieres", diplomeFiliereService.findAll());
-        return "besoin/create"; // -> resources/templates/besoin/create.html
+    @GetMapping("/{id}")
+    public Optional<Besoin> getBesoin(@PathVariable Integer id) {
+        return besoinService.findById(id);
     }
 
-    @PostMapping("/save")
-    public String saveBesoin(@ModelAttribute Besoin besoin) {
-        besoinService.save(besoin);
-        return "redirect:/besoins";
+    @GetMapping("/metiers")
+    public Object getMetiers() {
+        return metierService.getAll();
     }
+
+    @GetMapping("/departements")
+    public Object getDepartements() {
+        return departementService.getAllDepartements();
+    }
+
+    @GetMapping("/competences")
+    public Object getCompetences() {
+        return competenceService.getAll();
+    }
+
+    @GetMapping("/langues")
+    public Object getLangues() {
+        return langueService.getAll();
+    }
+
+    @GetMapping("/diplomes-filieres")
+    public Object getDiplomeFilieres() {
+        return diplomeFiliereService.findAll();
+    }
+
+    @GetMapping("/besoins")
+    public ResponseEntity<List<BesoinDTO>> getAllBesoins() {
+        return ResponseEntity.ok(besoinService.getAllBesoins());
+    }
+
+    @PostMapping
+    public ResponseEntity<Besoin> createBesoin(@RequestBody BesoinRequest request) {
+        Besoin besoin = besoinService.createBesoin(request);
+        return ResponseEntity.ok(besoin);
+    }
+
 }
