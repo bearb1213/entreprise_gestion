@@ -1,16 +1,19 @@
 package com.entreprise.gestion.rh.service;
 
+import java.time.LocalDateTime;
 import java.util.Collections;
 import java.util.List;
 import java.util.stream.Collectors;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import com.entreprise.gestion.rh.dto.ChoixDto;
 import com.entreprise.gestion.rh.dto.QuestionDto;
 import com.entreprise.gestion.rh.model.Candidature;
 import com.entreprise.gestion.rh.model.Choix;
+import com.entreprise.gestion.rh.model.Entretien;
 import com.entreprise.gestion.rh.model.Notes;
 import com.entreprise.gestion.rh.model.Question;
 import com.entreprise.gestion.rh.model.ReponseCandidat;
@@ -43,6 +46,9 @@ public class QuestionService {
     //-- dependances de services
     @Autowired
     private ChoixService choixService;
+
+    @Autowired
+    private EntretienService entretienService;
 
     @Autowired 
     private ReponseCandidatService reponseCandidatService;
@@ -173,6 +179,7 @@ public Float evaluateReponses(Integer idCandidature, Integer idQuestion, List<In
     return noteObtenue / valeurMax ;
 }
 
+@Transactional
 public Float evaluateQuestionnaire(Integer idCandidature,List<Float> notes) throws Exception
 {
 
@@ -193,8 +200,31 @@ public Float evaluateQuestionnaire(Integer idCandidature,List<Float> notes) thro
     System.out.println("Evaluation trouvee"); // le probleme reside ici vu qu'il n'y a encore rien dans la table Evaluation 
     // pb: le code s'arrete directement ici sans lever une seule exception
     note.setNote((double) moyenne);
-    note.setDateEntree(java.time.LocalDateTime.now());
+    
+    LocalDateTime dateActuelle = LocalDateTime.now();
+    note.setDateEntree(dateActuelle);
     notesRepository.save(note);
+
+    Integer nbJoursDecalage = 1 ;
+    Float noteMinimale = 0.8f ; //sense provenir d'un fichier de conf
+
+    if(moyenne>=noteMinimale)
+    {
+        Entretien entretien = new Entretien();
+        entretien.setCandidature(candidature);
+        entretien.setDateHeureDebut(dateActuelle.plusDays(nbJoursDecalage));
+        //enregistre un entretien
+        entretienService.saveEntretien(entretien);
+    }
+    //ici je vais donc envoyer un planning a l'email du candidat
+        /* 
+         * -contraintes: 
+         *  firy ny note minimale dia alefa manao entretien
+         *  firy ny jour de decalage 
+         *  (aleo atao anaty fichier de configuration aloha)
+         */
+    //Alternative a voir: creer un ecran montrant les notes de chaque candidat avec l'option (Appeler pour l'entretien)
+
 
 
     return moyenne;
