@@ -7,12 +7,16 @@ import com.entreprise.gestion.rh.model.Candidat;
 import com.entreprise.gestion.rh.model.CandidatCompetence;
 import com.entreprise.gestion.rh.model.CandidatDiplomeFiliere;
 import com.entreprise.gestion.rh.model.CandidatLangue;
+import com.entreprise.gestion.rh.model.Candidature;
 import com.entreprise.gestion.rh.model.Competence;
 import com.entreprise.gestion.rh.model.DiplomeFiliere;
+import com.entreprise.gestion.rh.model.Evaluation;
 import com.entreprise.gestion.rh.model.Experience;
 import com.entreprise.gestion.rh.model.Langue;
 import com.entreprise.gestion.rh.model.Metier;
 import com.entreprise.gestion.rh.service.CandidatService;
+import com.entreprise.gestion.rh.service.NotesService;
+
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -38,6 +42,7 @@ public class CandidatController {
     private final LangueRepository langueRepository;
     private final DiplomeFiliereRepository diplomeFiliereRepository;
     private final MetierRepository metierRepository;
+       private final NotesService notesService;
     
     @PostMapping
     public ResponseEntity<CandidatDTO> createCandidat(@RequestBody CandidatDTO candidatDTO) {
@@ -45,7 +50,36 @@ public class CandidatController {
         Candidat savedCandidat = candidatService.saveCandidat(candidat);
         return ResponseEntity.ok(convertToDTO(savedCandidat));
     }
+    @PostMapping("/postuler/{besoinId}")
+public ResponseEntity<EvaluationResultDTO> postuler(
+        @PathVariable Integer besoinId,
+        @RequestBody CandidatDTO candidatDTO) {
     
+    Candidat candidat = convertToEntity(candidatDTO);
+    candidat = candidatService.saveCandidat(candidat);
+
+    Besoin besoin = candidatService.getBesoinById(besoinId);
+    Candidature candidature = candidatService.createCandidature(besoin, candidat);
+
+    // 3️⃣ Calculer la note
+    int score = candidatService.calculateScore(candidat, besoin);
+    
+    // 🔥 CRÉER UN EvaluationResultDTO COMME /evaluate
+    EvaluationResultDTO result = new EvaluationResultDTO();
+    result.setCandidat(candidatDTO);
+    
+    Map<String, Integer> scores = new HashMap<>();
+    scores.put(besoin.getMetier().getLibelle() + " - " + besoin.getDepartement().getLibelle(), score);
+    result.setScores(scores);
+
+    // 4️⃣ Sauvegarder la note
+    Evaluation evaluation = candidatService.getEvaluationById(1);
+    notesService.saveNote((double)score, evaluation, candidature);
+
+    // 🔥 RETOURNER EvaluationResultDTO AU LIEU DE Map
+    return ResponseEntity.ok(result);
+}
+
     @PostMapping("/evaluate")
     public ResponseEntity<EvaluationResultDTO> evaluateCandidat(@RequestBody CandidatDTO candidatDTO) {
         Candidat candidat = convertToEntity(candidatDTO);
@@ -62,6 +96,7 @@ public class CandidatController {
         }
         
         result.setScores(scores);
+        
         return ResponseEntity.ok(result);
     }
     
