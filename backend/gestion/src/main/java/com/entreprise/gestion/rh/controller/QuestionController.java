@@ -13,6 +13,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
+import com.entreprise.gestion.exception.MyException;
 import com.entreprise.gestion.rh.dto.QuestionDto;
 import com.entreprise.gestion.rh.model.Choix;
 import com.entreprise.gestion.rh.model.Question;
@@ -40,7 +41,7 @@ public class QuestionController {
             List<HashMap<String,Object>> choix = (List<HashMap<String,Object>>) data.get("answers");
             if(!(choix.size() > 0))
             {
-                throw new Exception("Une question doit au moins avoir une proposition de reponse");
+                throw new MyException("Une question doit au moins avoir une proposition de reponse");
             }
             Question aEnregistrer = new Question();
             aEnregistrer.setIntitule(intitule);
@@ -124,7 +125,6 @@ public class QuestionController {
             e.printStackTrace();
             response.put("status", "error");
             response.put("message", "Probleme survenu lors de l'evaluation du quiz");
-            // TODO: handle exception
         }
         // request.getParameterMap().forEach((key,values)->{
         //     System.out.println("Question ID: " + key + ", Reponse: " + Arrays.toString(values));
