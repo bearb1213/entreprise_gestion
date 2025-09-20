@@ -11,7 +11,8 @@ import java.time.Period;
 import java.util.List;
 import java.util.stream.Collectors;
 import java.util.Map;
-import java.util.HashMap;
+import com.entreprise.gestion.rh.model.Candidature;
+import com.entreprise.gestion.rh.repository.CandidatureRepository;
 
 @Service
 @RequiredArgsConstructor
@@ -20,9 +21,8 @@ public class CandidatService {
     private final CandidatRepository candidatRepository;
     private final PersonneRepository personneRepository;
     private final BesoinRepository besoinRepository;
-    private final CompetenceRepository competenceRepository;
-    private final LangueRepository langueRepository;
-    private final DiplomeFiliereRepository diplomeFiliereRepository;
+    private final CandidatureRepository candidatureRepository;
+    private final EvaluationRepository evaluationRepository;
     
     @Transactional
     public Candidat saveCandidat(Candidat candidat) {
@@ -104,5 +104,25 @@ public class CandidatService {
     public List<Besoin> getActiveBesoins() {
         return besoinRepository.findByStatut( 1);
     }
-   
+
+    public Besoin getBesoinById(Integer id) {
+        return besoinRepository.findById(id).orElse(null);
+    }
+    
+
+    public Candidature createCandidature(Besoin besoin, Candidat candidat) {
+        Candidature candidature = new Candidature();
+        candidature.setBesoin(besoin);
+        candidature.setCandidat(candidat);
+        candidature.setStatut(1); // Statut initial
+        candidature.setDateCandidature(java.time.LocalDateTime.now());
+        
+        // Vous pouvez ajouter la sauvegarde de la candidature ici si nécessaire
+        candidatureRepository.save(candidature);
+        
+        return candidature;
+    }
+   public Evaluation getEvaluationById(Integer id) {
+        return evaluationRepository.findById(id).orElse(null);
+    }
 }

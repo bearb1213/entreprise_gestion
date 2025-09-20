@@ -102,7 +102,7 @@ const CvForm = () => {
 
       console.log("Données envoyées:", evaluationData);
       
-      const response = await axios.post(`${API_BASE_URL}/candidat/evaluate`, evaluationData);
+      const response = await axios.post(`${API_BASE_URL}/candidat/postuler/1`, evaluationData);
       setScores(response.data.scores);
     } catch (error) {
       console.error('Error evaluating candidat:', error);
