@@ -33,4 +33,11 @@ public class MetierService {
                         Metier::getLibelle
                 ));
     }
+    public Metier createMetier(Metier metier) {
+        return metierRepository.save(metier);
+    }
+    public Metier updateMetier(Integer id, Metier metier) {
+        metier.setId(id);
+        return metierRepository.save(metier);
+    }
 }

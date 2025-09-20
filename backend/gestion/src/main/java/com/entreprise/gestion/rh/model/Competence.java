@@ -6,6 +6,8 @@ import lombok.AllArgsConstructor;
 import jakarta.persistence.*;
 import java.util.List;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
+
 @Entity
 @Table(name = "competence")
 @Data
@@ -18,9 +20,16 @@ public class Competence {
     
     private String libelle;
     
-    @ManyToMany(mappedBy = "competences", fetch = FetchType.LAZY)
+    @ManyToMany(fetch = FetchType.LAZY)
+    @JoinTable(
+        name = "candidat_competence",
+        joinColumns = @JoinColumn(name = "competence_id"),
+        inverseJoinColumns = @JoinColumn(name = "candidat_id")
+    )
+    @JsonIgnore // Ajoutez cette annotation
     private List<Candidat> candidats;
     
     @OneToMany(mappedBy = "competence", fetch = FetchType.LAZY)
+    @JsonIgnore // Ajoutez cette annotation
     private List<BesoinCompetence> besoinCompetences;
 }

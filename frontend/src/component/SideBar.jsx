@@ -1,6 +1,4 @@
-// src/Sidebar.jsx
 import React, { useEffect, useState } from "react";
-import { useNavigate } from "react-router-dom";
 
 // Icônes SVG intégrées
 const DashboardIcon = () => (
@@ -9,22 +7,9 @@ const DashboardIcon = () => (
   </svg>
 );
 
-const ProfileIcon = () => (
+const CandidatureIcon = () => (
   <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
-  </svg>
-);
-
-const SettingsIcon = () => (
-  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
-    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
-  </svg>
-);
-
-const TasksIcon = () => (
-  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
+    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
   </svg>
 );
 
@@ -34,41 +19,20 @@ const LogoutIcon = () => (
   </svg>
 );
 
-export default function SideBar({ active = "Dashboard", roles = null }) {
-  const navigate = useNavigate();
+export default function SideBar({ active = "dashboard", onNavigate }) {
   const [activeItem, setActiveItem] = useState(active);
-  const [menuItems, setMenuItems] = useState([]);
+  const [menuItems] = useState([
+    { id: 1, name: "Dashboard", view: "dashboard", icon: DashboardIcon },
+    { id: 2, name: "Candidature", view: "candidature", icon: CandidatureIcon },
+  ]);
 
-  useEffect(() => {
-    if (roles == "ADMIN") {
-      setMenuItems([
-        { id: 1, name: "Dashboard", path: "/dashboard", icon: DashboardIcon },
-        { id: 2, name: "Profile", path: "/profile", icon: ProfileIcon },
-      ]);
-    } else if (roles == "DEPARTMENT_CHIEF") {
-      setMenuItems([
-        { id: 1, name: "Dashboard", path: "/dashboard", icon: DashboardIcon },
-        { id: 2, name: "Profile", path: "/profile", icon: ProfileIcon },
-        { id: 4, name: "Settings", path: "/settings", icon: SettingsIcon },
-      ]);
-    } else {
-      setMenuItems([
-        { id: 1, name: "Dashboard", path: "/dashboard", icon: DashboardIcon },
-        { id: 2, name: "Profile", path: "/profile", icon: ProfileIcon },
-        { id: 3, name: "Tasks", path: "/tasks", icon: TasksIcon },
-      ]);
-    }
-  }, [roles]);
-
-  const handleNavigation = (path, name) => {
-    navigate(path);
-    setActiveItem(name);
+  const handleNavigation = (view) => {
+    setActiveItem(view);
+    onNavigate(view);
   };
 
   const handleLogout = () => {
-    // Add logout logic here
     console.log("User logged out");
-    navigate("/login");
   };
 
   return (
@@ -77,7 +41,7 @@ export default function SideBar({ active = "Dashboard", roles = null }) {
         <span className="bg-blue-500 p-2 rounded-lg mr-3">
           <DashboardIcon />
         </span>
-        My App
+        Recrutement App
       </h2>
       
       <nav className="flex-1 overflow-y-auto py-4">
@@ -88,11 +52,11 @@ export default function SideBar({ active = "Dashboard", roles = null }) {
               <li
                 key={item.id}
                 className={`mb-2 rounded-lg transition-all duration-200 ${
-                  activeItem === item.name
+                  activeItem === item.view
                     ? "bg-blue-600 text-white shadow-md"
                     : "text-gray-300 hover:bg-gray-700 hover:text-white"
                 }`}
-                onClick={() => handleNavigation(item.path, item.name)}
+                onClick={() => handleNavigation(item.view)}
               >
                 <div className="flex items-center p-3 cursor-pointer">
                   <IconComponent />

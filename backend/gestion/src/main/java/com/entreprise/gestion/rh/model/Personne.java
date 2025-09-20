@@ -2,7 +2,6 @@ package com.entreprise.gestion.rh.model;
 
 import jakarta.persistence.*;
 import lombok.*;
-
 import java.time.LocalDate;
 
 @Entity
@@ -40,9 +39,36 @@ public class Personne {
     @Column(name = "telephone", length = 50)
     private String telephone;
     
-    @OneToOne(mappedBy = "personne", fetch = FetchType.LAZY)
+    // CORRECTION 1: Ajout de cascade
+    @OneToOne(mappedBy = "personne", fetch = FetchType.LAZY, 
+              cascade = CascadeType.ALL, orphanRemoval = true)
     private Candidat candidat;
     
-    @OneToOne(mappedBy = "personne", fetch = FetchType.LAZY)
+    // CORRECTION 2: Ajout de cascade
+    @OneToOne(mappedBy = "personne", fetch = FetchType.LAZY, 
+              cascade = CascadeType.ALL, orphanRemoval = true)
     private Employe employe;
+    
+    // CORRECTION 3: Méthodes helpers pour gérer les relations bidirectionnelles
+    public void setCandidat(Candidat candidat) {
+        if (candidat == null) {
+            if (this.candidat != null) {
+                this.candidat.setPersonne(null);
+            }
+        } else {
+            candidat.setPersonne(this);
+        }
+        this.candidat = candidat;
+    }
+    
+    public void setEmploye(Employe employe) {
+        if (employe == null) {
+            if (this.employe != null) {
+                this.employe.setPersonne(null);
+            }
+        } else {
+            employe.setPersonne(this);
+        }
+        this.employe = employe;
+    }
 }
