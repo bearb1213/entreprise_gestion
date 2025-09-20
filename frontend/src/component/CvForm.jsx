@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 
 const CvForm = () => {
-  const [candidat, setCandidat] = useState({
+  const [formData, setFormData] = useState({
     personne: {
       nom: '',
       prenom: '',
@@ -13,9 +13,9 @@ const CvForm = () => {
       telephone: ''
     },
     description: '',
-    competences: [],
-    langues: [],
-    diplomes: [],
+    competencesIds: [],
+    languesIds: [],
+    diplomesIds: [],
     experiences: []
   });
   
@@ -24,8 +24,7 @@ const CvForm = () => {
   const [diplomes, setDiplomes] = useState([]);
   const [metiers, setMetiers] = useState([]);
   const [scores, setScores] = useState({});
-  const [besoins, setBesoins] = useState([]);
-  const [loadingCompetences, setLoadingCompetences] = useState(true); // État de chargement
+  const [loading, setLoading] = useState(true);
 
   // Base URL pour les API
   const API_BASE_URL = 'http://localhost:8080/api';
@@ -36,32 +35,27 @@ const CvForm = () => {
 
   const fetchInitialData = async () => {
     try {
-      const [compRes, langRes, dipRes, metRes, besRes] = await Promise.all([
+      const [compRes, langRes, dipRes, metRes] = await Promise.all([
         axios.get(`${API_BASE_URL}/competences`),
         axios.get(`${API_BASE_URL}/langues`),
         axios.get(`${API_BASE_URL}/diplomes`),
-        axios.get(`${API_BASE_URL}/metiers`),
-        axios.get(`${API_BASE_URL}/besoins/1`)
+        axios.get(`${API_BASE_URL}/metiers`)
       ]);
       
       setCompetences(compRes.data);
       setLangues(langRes.data);
       setDiplomes(dipRes.data);
       setMetiers(metRes.data);
-      setBesoins(besRes.data);
-      setLoadingCompetences(false); // Fin du chargement
     } catch (error) {
       console.error('Error fetching data:', error);
-      setLoadingCompetences(false); // Fin du chargement même en cas d'erreur
+    } finally {
+      setLoading(false);
     }
   };
 
-  // Removed duplicate declaration of getLibelleById
-
-
   const handleInputChange = (e, section, field) => {
     if (section) {
-      setCandidat(prev => ({
+      setFormData(prev => ({
         ...prev,
         [section]: {
           ...prev[section],
@@ -69,7 +63,7 @@ const CvForm = () => {
         }
       }));
     } else {
-      setCandidat(prev => ({
+      setFormData(prev => ({
         ...prev,
         [field]: e.target.value
       }));
@@ -77,14 +71,14 @@ const CvForm = () => {
   };
 
   const handleArrayChange = (arrayName, item) => {
-    setCandidat(prev => ({
+    setFormData(prev => ({
       ...prev,
       [arrayName]: [...prev[arrayName], item]
     }));
   };
 
   const removeArrayItem = (arrayName, index) => {
-    setCandidat(prev => ({
+    setFormData(prev => ({
       ...prev,
       [arrayName]: prev[arrayName].filter((_, i) => i !== index)
     }));
@@ -93,37 +87,22 @@ const CvForm = () => {
   const handleSubmit = async (e) => {
     e.preventDefault();
     try {
-      const response = await axios.post(`${API_BASE_URL}/candidat/evaluate`, {
-        personne: {
-          nom: candidat.personne.nom,
-          prenom: candidat.personne.prenom,
-          email: candidat.personne.email,
-          dateNaissance: candidat.personne.dateNaissance,
-          genre: candidat.personne.genre ? parseInt(candidat.personne.genre) : null,
-          ville: candidat.personne.ville,
-          telephone: candidat.personne.telephone
-        },
-        description: candidat.description,
-        competences: candidat.competences.map(comp => ({ 
-          id: comp.competence.id,
-          libelle: competences.find(c => c.id === comp.competence.id)?.libelle || ''
-        })),
-        langues: candidat.langues.map(langue => ({ 
-          id: langue.langue.id,
-          libelle: langues.find(l => l.id === langue.langue.id)?.libelle || ''
-        })),
-        diplomes: candidat.diplomes.map(diplome => ({ 
-          id: diplome.diplomeFiliere.id,
-          libelle: diplomes.find(d => d.id === diplome.diplomeFiliere.id)?.libelle || ''
-        })),
-        experiences: candidat.experiences.map(exp => ({
-          nbAnnee: exp.nbAnnee,
-          metier: { 
-            id: exp.metier.id,
-            libelle: metiers.find(m => m.id === exp.metier.id)?.libelle || ''
-          }
+      // Structure simplifiée pour l'évaluation
+      const evaluationData = {
+        personne: formData.personne,
+        description: formData.description,
+        competencesIds: formData.competencesIds,
+        languesIds: formData.languesIds,
+        diplomesIds: formData.diplomesIds,
+        experiences: formData.experiences.map(exp => ({
+          metierId: exp.metier.id,
+          nbAnnee: exp.nbAnnee
         }))
-      });
+      };
+
+      console.log("Données envoyées:", evaluationData);
+      
+      const response = await axios.post(`${API_BASE_URL}/candidat/evaluate`, evaluationData);
       setScores(response.data.scores);
     } catch (error) {
       console.error('Error evaluating candidat:', error);
@@ -133,29 +112,23 @@ const CvForm = () => {
 
   const handleSave = async () => {
     try {
-      await axios.post(`${API_BASE_URL}/candidat`, {
-        personne: {
-          nom: candidat.personne.nom,
-          prenom: candidat.personne.prenom,
-          email: candidat.personne.email,
-          dateNaissance: candidat.personne.dateNaissance,
-          genre: candidat.personne.genre ? parseInt(candidat.personne.genre) : null,
-          ville: candidat.personne.ville,
-          telephone: candidat.personne.telephone
-        },
-        description: candidat.description,
-        competences: candidat.competences.map(comp => ({ id: comp.competence.id })),
-        langues: candidat.langues.map(langue => ({ id: langue.langue.id })),
-        diplomes: candidat.diplomes.map(diplome => ({ id: diplome.diplomeFiliere.id })),
-        experiences: candidat.experiences.map(exp => ({
-          nbAnnee: exp.nbAnnee,
-          metier: { id: exp.metier.id }
+      const saveData = {
+        personne: formData.personne,
+        description: formData.description,
+        competencesIds: formData.competencesIds,
+        languesIds: formData.languesIds,
+        diplomesIds: formData.diplomesIds,
+        experiences: formData.experiences.map(exp => ({
+          metierId: exp.metier.id,
+          nbAnnee: exp.nbAnnee
         }))
-      });
+      };
+
+      await axios.post(`${API_BASE_URL}/candidat`, saveData);
       alert('Candidat enregistré avec succès!');
       
       // Réinitialiser le formulaire après sauvegarde
-      setCandidat({
+      setFormData({
         personne: {
           nom: '',
           prenom: '',
@@ -166,9 +139,9 @@ const CvForm = () => {
           telephone: ''
         },
         description: '',
-        competences: [],
-        langues: [],
-        diplomes: [],
+        competencesIds: [],
+        languesIds: [],
+        diplomesIds: [],
         experiences: []
       });
       setScores({});
@@ -184,6 +157,9 @@ const CvForm = () => {
     return item ? item.libelle : 'Inconnu';
   };
 
+  if (loading) {
+    return <div className="container mx-auto p-6">Chargement...</div>;
+  }
 
   return (
     <div className="container mx-auto p-6">
@@ -197,7 +173,7 @@ const CvForm = () => {
             <label className="block text-gray-700 text-sm font-bold mb-2">Nom *</label>
             <input
               type="text"
-              value={candidat.personne.nom}
+              value={formData.personne.nom}
               onChange={(e) => handleInputChange(e, 'personne', 'nom')}
               className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
               required
@@ -207,7 +183,7 @@ const CvForm = () => {
             <label className="block text-gray-700 text-sm font-bold mb-2">Prénom *</label>
             <input
               type="text"
-              value={candidat.personne.prenom}
+              value={formData.personne.prenom}
               onChange={(e) => handleInputChange(e, 'personne', 'prenom')}
               className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
               required
@@ -217,7 +193,7 @@ const CvForm = () => {
             <label className="block text-gray-700 text-sm font-bold mb-2">Email *</label>
             <input
               type="email"
-              value={candidat.personne.email}
+              value={formData.personne.email}
               onChange={(e) => handleInputChange(e, 'personne', 'email')}
               className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
               required
@@ -227,7 +203,7 @@ const CvForm = () => {
             <label className="block text-gray-700 text-sm font-bold mb-2">Téléphone *</label>
             <input
               type="tel"
-              value={candidat.personne.telephone}
+              value={formData.personne.telephone}
               onChange={(e) => handleInputChange(e, 'personne', 'telephone')}
               className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
               required
@@ -237,7 +213,7 @@ const CvForm = () => {
             <label className="block text-gray-700 text-sm font-bold mb-2">Date de Naissance *</label>
             <input
               type="date"
-              value={candidat.personne.dateNaissance}
+              value={formData.personne.dateNaissance}
               onChange={(e) => handleInputChange(e, 'personne', 'dateNaissance')}
               className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
               required
@@ -246,7 +222,7 @@ const CvForm = () => {
           <div>
             <label className="block text-gray-700 text-sm font-bold mb-2">Genre *</label>
             <select
-              value={candidat.personne.genre}
+              value={formData.personne.genre}
               onChange={(e) => handleInputChange(e, 'personne', 'genre')}
               className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
               required
@@ -261,7 +237,7 @@ const CvForm = () => {
             <label className="block text-gray-700 text-sm font-bold mb-2">Ville *</label>
             <input
               type="text"
-              value={candidat.personne.ville}
+              value={formData.personne.ville}
               onChange={(e) => handleInputChange(e, 'personne', 'ville')}
               className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
               required
@@ -269,40 +245,31 @@ const CvForm = () => {
           </div>
         </div>
 
+        {/* Compétences */}
         <h2 className="text-xl font-semibold mb-4">Compétences</h2>
         <div className="mb-6">
           <select
             onChange={(e) => {
               if (e.target.value) {
                 const selectedId = parseInt(e.target.value);
-                const selectedCompetence = competences.find(comp => comp.id === selectedId);
-                
-                if (selectedCompetence) {
-                  handleArrayChange('competences', { 
-                    competence: { 
-                      id: selectedCompetence.id,
-                      libelle: selectedCompetence.libelle
-                    } 
-                  });
-                  e.target.value = '';
-                }
+                handleArrayChange('competencesIds', selectedId);
+                e.target.value = '';
               }
             }}
             className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
-            disabled={loadingCompetences}
           >
-            <option value="">{loadingCompetences ? 'Chargement...' : 'Sélectionnez une compétence'}</option>
+            <option value="">Sélectionnez une compétence</option>
             {competences.map(comp => (
               <option key={comp.id} value={comp.id}>{comp.libelle}</option>
             ))}
           </select>
           <div className="mt-2">
-            {candidat.competences.map((comp, index) => (
+            {formData.competencesIds.map((compId, index) => (
               <div key={index} className="flex items-center justify-between bg-gray-100 p-2 rounded mb-2">
-                <span>{comp.competence.libelle}</span>
+                <span>{getLibelleById(compId, competences)}</span>
                 <button
                   type="button"
-                  onClick={() => removeArrayItem('competences', index)}
+                  onClick={() => removeArrayItem('competencesIds', index)}
                   className="text-red-500 hover:text-red-700 font-bold"
                 >
                   ×
@@ -312,19 +279,14 @@ const CvForm = () => {
           </div>
         </div>
 
-
         {/* Langues */}
         <h2 className="text-xl font-semibold mb-4">Langues</h2>
         <div className="mb-6">
           <select
             onChange={(e) => {
               if (e.target.value) {
-                handleArrayChange('langues', { 
-                  langue: { 
-                    id: parseInt(e.target.value),
-                    libelle: getLibelleById(parseInt(e.target.value), langues)
-                  } 
-                });
+                const selectedId = parseInt(e.target.value);
+                handleArrayChange('languesIds', selectedId);
                 e.target.value = '';
               }
             }}
@@ -336,12 +298,12 @@ const CvForm = () => {
             ))}
           </select>
           <div className="mt-2">
-            {candidat.langues.map((langue, index) => (
+            {formData.languesIds.map((langueId, index) => (
               <div key={index} className="flex items-center justify-between bg-gray-100 p-2 rounded mb-2">
-                <span>{langue.langue.libelle}</span>
+                <span>{getLibelleById(langueId, langues)}</span>
                 <button
                   type="button"
-                  onClick={() => removeArrayItem('langues', index)}
+                  onClick={() => removeArrayItem('languesIds', index)}
                   className="text-red-500 hover:text-red-700 font-bold"
                 >
                   ×
@@ -357,12 +319,8 @@ const CvForm = () => {
           <select
             onChange={(e) => {
               if (e.target.value) {
-                handleArrayChange('diplomes', { 
-                  diplomeFiliere: { 
-                    id: parseInt(e.target.value),
-                    libelle: getLibelleById(parseInt(e.target.value), diplomes)
-                  } 
-                });
+                const selectedId = parseInt(e.target.value);
+                handleArrayChange('diplomesIds', selectedId);
                 e.target.value = '';
               }
             }}
@@ -374,12 +332,12 @@ const CvForm = () => {
             ))}
           </select>
           <div className="mt-2">
-            {candidat.diplomes.map((diplome, index) => (
+            {formData.diplomesIds.map((diplomeId, index) => (
               <div key={index} className="flex items-center justify-between bg-gray-100 p-2 rounded mb-2">
-                <span>{diplome.diplomeFiliere.libelle}</span>
+                <span>{getLibelleById(diplomeId, diplomes)}</span>
                 <button
                   type="button"
-                  onClick={() => removeArrayItem('diplomes', index)}
+                  onClick={() => removeArrayItem('diplomesIds', index)}
                   className="text-red-500 hover:text-red-700 font-bold"
                 >
                   ×
@@ -398,14 +356,14 @@ const CvForm = () => {
               <select
                 onChange={(e) => {
                   if (e.target.value) {
-                    handleArrayChange('experiences', {
-                      metier: { 
-                        id: parseInt(e.target.value),
-                        libelle: getLibelleById(parseInt(e.target.value), metiers)
-                      },
-                      nbAnnee: 1
-                    });
-                    e.target.value = '';
+                    const selectedMetier = metiers.find(m => m.id === parseInt(e.target.value));
+                    if (selectedMetier) {
+                      handleArrayChange('experiences', {
+                        metier: selectedMetier,
+                        nbAnnee: 1
+                      });
+                      e.target.value = '';
+                    }
                   }
                 }}
                 className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
@@ -423,14 +381,14 @@ const CvForm = () => {
                 min="1"
                 max="50"
                 onChange={(e) => {
-                  if (candidat.experiences.length > 0) {
-                    const updatedExperiences = [...candidat.experiences];
+                  if (formData.experiences.length > 0) {
+                    const updatedExperiences = [...formData.experiences];
                     const lastIndex = updatedExperiences.length - 1;
                     updatedExperiences[lastIndex] = {
                       ...updatedExperiences[lastIndex],
                       nbAnnee: parseInt(e.target.value) || 1
                     };
-                    setCandidat(prev => ({ ...prev, experiences: updatedExperiences }));
+                    setFormData(prev => ({ ...prev, experiences: updatedExperiences }));
                   }
                 }}
                 className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
@@ -439,7 +397,7 @@ const CvForm = () => {
             </div>
           </div>
           <div className="mt-2">
-            {candidat.experiences.map((exp, index) => (
+            {formData.experiences.map((exp, index) => (
               <div key={index} className="flex items-center justify-between bg-gray-100 p-2 rounded mb-2">
                 <span>{exp.metier.libelle} - {exp.nbAnnee} an(s)</span>
                 <button
@@ -458,7 +416,7 @@ const CvForm = () => {
         <div className="mb-6">
           <label className="block text-gray-700 text-sm font-bold mb-2">Description / Présentation</label>
           <textarea
-            value={candidat.description}
+            value={formData.description}
             onChange={(e) => handleInputChange(e, null, 'description')}
             rows="4"
             className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
@@ -484,7 +442,7 @@ const CvForm = () => {
           <button
             type="button"
             onClick={() => {
-              setCandidat({
+              setFormData({
                 personne: {
                   nom: '',
                   prenom: '',
@@ -495,9 +453,9 @@ const CvForm = () => {
                   telephone: ''
                 },
                 description: '',
-                competences: [],
-                langues: [],
-                diplomes: [],
+                competencesIds: [],
+                languesIds: [],
+                diplomesIds: [],
                 experiences: []
               });
               setScores({});
@@ -523,7 +481,7 @@ const CvForm = () => {
                 <div className="w-full bg-gray-200 rounded-full h-2.5">
                   <div
                     className="bg-blue-600 h-2.5 rounded-full transition-all duration-500"
-                    style={{ width: `${Math.min((score / 100) * 100, 100)}%` }}
+                    style={{ width: `${Math.min(score, 100)}%` }}
                   ></div>
                 </div>
                 <div className="text-sm text-gray-600 mt-1">
