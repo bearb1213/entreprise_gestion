@@ -15,4 +15,9 @@ public class ChoixService {
     {
         return choixRepository.findById(id).orElse(null);
     }
+
+    public Choix saveChoix(Choix choix)
+    {
+        return choixRepository.save(choix);
+    }
 }

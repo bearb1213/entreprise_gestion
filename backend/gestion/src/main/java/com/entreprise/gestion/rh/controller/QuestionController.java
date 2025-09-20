@@ -14,7 +14,9 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.entreprise.gestion.rh.dto.QuestionDto;
+import com.entreprise.gestion.rh.model.Choix;
 import com.entreprise.gestion.rh.model.Question;
+import com.entreprise.gestion.rh.service.ChoixService;
 import com.entreprise.gestion.rh.service.QuestionService;
 
 
@@ -24,6 +26,47 @@ public class QuestionController {
     
     @Autowired
     private QuestionService questionService;
+
+    @Autowired
+    private ChoixService choixService ;
+
+    @PostMapping({"/create","/create"})
+    public HashMap<String,Object> createQuestion(@RequestBody Map<String, Object> data)
+    {
+        //amelioration a apporter:encapsuler la logique metier dans une methode de service
+        HashMap<String,Object> response = new HashMap<>();
+        try {
+            String intitule = (String) data.get("content");
+            List<HashMap<String,Object>> choix = (List<HashMap<String,Object>>) data.get("answers");
+            if(!(choix.size() > 0))
+            {
+                throw new Exception("Une question doit au moins avoir une proposition de reponse");
+            }
+            Question aEnregistrer = new Question();
+            aEnregistrer.setIntitule(intitule);
+
+            Question qEnregistree = questionService.saveQuestion(aEnregistrer);
+
+            //j'enregistre directement la question,puis recupere son id
+            for (HashMap<String,Object> c : choix) {
+                Choix choixAEnregistrer = new Choix();
+                choixAEnregistrer.setQuestion(qEnregistree);
+                choixAEnregistrer.setReponse((String) c.get("text"));
+                choixAEnregistrer.setCoeff((Integer) c.get("score"));
+                
+
+                //enregistrement des choix de la question
+                choixService.saveChoix(choixAEnregistrer);
+
+            }
+            
+        } catch (Exception e) {
+            response.put("status","error");
+            response.put("message","Erreur lors de la creation de la question");
+        }
+
+        return response;
+    }
 
     @PostMapping({"/", ""})
     public List<Object> getQuestions(@RequestParam("id_dept") Integer deptId, @RequestParam("id_metier") Integer metierId) {

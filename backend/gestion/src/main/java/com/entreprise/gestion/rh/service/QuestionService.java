@@ -58,6 +58,11 @@ public class QuestionService {
         return questionRepository.findById(id).orElseThrow();
     }
 
+    public Question saveQuestion(Question question)
+    {
+        return questionRepository.save(question);
+    }
+
     public List<Question> getQuestionsAleatoiresParDepartement(Integer id,int nb)
     {
         
