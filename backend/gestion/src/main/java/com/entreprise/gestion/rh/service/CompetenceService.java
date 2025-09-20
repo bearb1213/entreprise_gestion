@@ -33,4 +33,14 @@ public class CompetenceService {
                         c -> c.getLibelle()
                 ));
     }
+    public Competence createCompetence(Competence competence) {
+        return competenceRepository.save(competence);
+    }
+    public Competence updateCompetence(Integer id, Competence competence) {
+        competence.setId(id);
+        return competenceRepository.save(competence);
+    }
+    public void deleteCompetence(Integer id) {
+        competenceRepository.deleteById(id);
+    }
 }

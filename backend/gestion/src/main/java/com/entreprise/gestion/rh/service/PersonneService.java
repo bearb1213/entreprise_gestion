@@ -160,4 +160,5 @@ public class PersonneService {
     public List<Personne> findByVille(String ville) {
         return personneRepository.findByVille(ville);
     }
+  
 }

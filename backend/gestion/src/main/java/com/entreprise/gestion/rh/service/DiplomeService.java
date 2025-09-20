@@ -33,4 +33,11 @@ public class DiplomeService {
                         d -> d.getLibelle()
                 ));
     }
+    public Diplome createDiplome(Diplome diplome) {
+        return diplomeRepository.save(diplome);
+    }
+    public Diplome updateDiplome(Integer id, Diplome diplome) {
+        diplome.setId(id);
+        return diplomeRepository.save(diplome);
+    }
 }

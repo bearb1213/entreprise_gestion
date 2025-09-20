@@ -3,7 +3,6 @@ package com.entreprise.gestion.rh.model;
 import jakarta.persistence.*;
 import lombok.*;
 
-import java.util.ArrayList;
 import java.util.List;
 
 @Entity
@@ -24,7 +23,7 @@ public class Besoin {
     private Integer minAge;
     
     @Column(name = "nb_poste_dsipo")
-    private Integer nbPosteDispo;
+    private Integer nbPosteDsipo;
     
     @Column(name = "coeff_age")
     private Integer coeffAge;
@@ -43,18 +42,18 @@ public class Besoin {
     private Metier metier;
     
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "departement_id", nullable = false)
+    @JoinColumn(name = "departement_id")
     private Departement departement;
     
-    @OneToMany(mappedBy = "besoin", fetch = FetchType.LAZY)
-    private List<BesoinCompetence> besoinCompetences = new ArrayList<>();
+    @OneToMany(mappedBy = "besoin", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
+    private List<BesoinCompetence> besoinCompetences;
     
-    @OneToMany(mappedBy = "besoin", fetch = FetchType.LAZY)
-    private List<BesoinLangue> besoinLangues = new ArrayList<>();
+    @OneToMany(mappedBy = "besoin", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
+    private List<BesoinLangue> besoinLangues;
     
-    @OneToMany(mappedBy = "besoin", fetch = FetchType.LAZY)
-    private List<BesoinDiplomeFiliere> besoinDiplomeFilieres = new ArrayList<>();
+    @OneToMany(mappedBy = "besoin", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
+    private List<BesoinDiplomeFiliere> besoinDiplomeFilieres;
     
-    @OneToMany(mappedBy = "besoin", fetch = FetchType.LAZY)
-    private List<Candidature> candidatures = new ArrayList<>();
+    @OneToMany(mappedBy = "besoin", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
+    private List<Candidature> candidatures;
 }

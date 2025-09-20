@@ -33,4 +33,11 @@ public class LangueService {
                         l -> l.getLibelle()
                 ));
     }
+    public Langue createLangue(Langue langue) {
+        return langueRepository.save(langue);
+    }
+    public Langue updateLangue(Integer id, Langue langue) {
+        langue.setId(id);
+        return langueRepository.save(langue);
+    }
 }
