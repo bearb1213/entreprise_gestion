@@ -33,86 +33,73 @@ public class CandidatService {
         return candidatRepository.save(candidat);
     }
     
-   public int calculateScore(Candidat candidat, Besoin besoin) {
-    int score = 0;
+    public int calculateScore(Candidat candidat, Besoin besoin) {
+        int score = 0;
     
-    // 1. Validation de la date de naissance
-    if (candidat.getPersonne().getDateNaissance() == null) {
-        return 0; // ou gérer l'erreur
-    }
+        LocalDate now = LocalDate.now();
     
-    // 2. Calcul d'âge sécurisé
-    LocalDate now = LocalDate.now();
-    int age = Period.between(candidat.getPersonne().getDateNaissance(), now).getYears();
-    
-    // Points pour l'âge
-    if (age >= besoin.getMinAge() && age <= besoin.getMaxAge()) {
-        score += besoin.getCoeffAge();
-    }
-    
-    // 3. Points pour l'expérience (corrigé)
-    if (candidat.getExperiences() != null) {
-        int totalExperience = candidat.getExperiences().stream()
-            .mapToInt(Experience::getNbAnnee)
-            .sum();
-        
-        if (totalExperience >= besoin.getMinExperience()) {
-            // Formule plus raisonnable
-            int experienceBonus = Math.min(totalExperience - besoin.getMinExperience(), 10);
-            score += besoin.getCoeffExperience() * experienceBonus;
+        // 1. ÂGE
+        if (candidat.getPersonne().getDateNaissance() != null 
+            && besoin.getMinAge() != null && besoin.getMaxAge() != null) {
+            
+            int age = Period.between(candidat.getPersonne().getDateNaissance(), now).getYears();
+            
+            int ageNote = (age >= besoin.getMinAge() && age <= besoin.getMaxAge()) ? 20 : 0;
+            score += ageNote * besoin.getCoeffAge();
         }
-    }
     
-    // 4. Optimisation des compétences avec Map
-    if (candidat.getCompetences() != null && besoin.getBesoinCompetences() != null) {
-        Map<Integer, Integer> besoinCompetencesMap = besoin.getBesoinCompetences().stream()
-            .collect(Collectors.toMap(
-                bc -> bc.getCompetence().getId(),
-                BesoinCompetence::getCoeff
-            ));
-        
-        for (CandidatCompetence cc : candidat.getCompetences()) {
-            Integer coeff = besoinCompetencesMap.get(cc.getCompetence().getId());
-            if (coeff != null) {
-                score += coeff;
+        // 2. EXPÉRIENCE
+        if (candidat.getExperiences() != null && besoin.getMinExperience() != null) {
+            int totalExp = candidat.getExperiences().stream()
+                    .mapToInt(Experience::getNbAnnee)
+                    .sum();
+    
+            // formule : (exp / minExp) * 20, plafonné à 20
+            int expNote = (int) Math.min((totalExp * 20.0) / besoin.getMinExperience(), 20);
+            score += expNote * besoin.getCoeffExperience();
+        }
+    
+        // 3. COMPÉTENCES
+        if (candidat.getCompetences() != null && besoin.getBesoinCompetences() != null) {
+            Map<Integer, Integer> besoinCompetencesMap = besoin.getBesoinCompetences().stream()
+                .collect(Collectors.toMap(
+                    bc -> bc.getCompetence().getId(),
+                    BesoinCompetence::getCoeff
+                ));
+    
+            for (BesoinCompetence bc : besoin.getBesoinCompetences()) {
+                boolean hasSkill = candidat.getCompetences().stream()
+                    .anyMatch(cc -> cc.getCompetence().getId().equals(bc.getCompetence().getId()));
+    
+                int skillNote = hasSkill ? 20 : 0;
+                score += skillNote * bc.getCoeff();
             }
         }
-    }
     
-    // 5. Même optimisation pour les langues
-    if (candidat.getLangues() != null && besoin.getBesoinLangues() != null) {
-        Map<Integer, Integer> besoinLanguesMap = besoin.getBesoinLangues().stream()
-            .collect(Collectors.toMap(
-                bl -> bl.getLangue().getId(),
-                BesoinLangue::getCoeff
-            ));
-        
-        for (CandidatLangue cl : candidat.getLangues()) {
-            Integer coeff = besoinLanguesMap.get(cl.getLangue().getId());
-            if (coeff != null) {
-                score += coeff;
+        // 4. LANGUES
+        if (candidat.getLangues() != null && besoin.getBesoinLangues() != null) {
+            for (BesoinLangue bl : besoin.getBesoinLangues()) {
+                boolean hasLang = candidat.getLangues().stream()
+                    .anyMatch(cl -> cl.getLangue().getId().equals(bl.getLangue().getId()));
+    
+                int langNote = hasLang ? 20 : 0;
+                score += langNote * bl.getCoeff();
             }
         }
-    }
     
-    // 6. Même optimisation pour les diplômes
-    if (candidat.getDiplomes() != null && besoin.getBesoinDiplomeFilieres() != null) {
-        Map<Integer, Integer> besoinDiplomesMap = besoin.getBesoinDiplomeFilieres().stream()
-            .collect(Collectors.toMap(
-                bdf -> bdf.getDiplomeFiliere().getId(),
-                BesoinDiplomeFiliere::getCoeff
-            ));
-        
-        for (CandidatDiplomeFiliere cdf : candidat.getDiplomes()) {
-            Integer coeff = besoinDiplomesMap.get(cdf.getDiplomeFiliere().getId());
-            if (coeff != null) {
-                score += coeff;
+        // 5. DIPLÔMES
+        if (candidat.getDiplomes() != null && besoin.getBesoinDiplomeFilieres() != null) {
+            for (BesoinDiplomeFiliere bdf : besoin.getBesoinDiplomeFilieres()) {
+                boolean hasDiplome = candidat.getDiplomes().stream()
+                    .anyMatch(cdf -> cdf.getDiplomeFiliere().getId().equals(bdf.getDiplomeFiliere().getId()));
+    
+                int diplomeNote = hasDiplome ? 20 : 0;
+                score += diplomeNote * bdf.getCoeff();
             }
         }
-    }
     
-    return score;
-}
+        return score;
+    }
     
     public List<Besoin> getActiveBesoins() {
         return besoinRepository.findByStatut( 1);
