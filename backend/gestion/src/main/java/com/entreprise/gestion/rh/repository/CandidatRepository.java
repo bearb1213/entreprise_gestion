@@ -6,6 +6,7 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
+import java.time.LocalDate;
 import java.util.List;
 import java.util.Optional;
 
@@ -86,18 +87,21 @@ public interface CandidatRepository extends JpaRepository<Candidat, Integer> {
     boolean existsByPersonneEmail(String email);
     
     // ✅ Trouver des candidats par tranche d'âge
-    @Query("SELECT c FROM Candidat c WHERE FUNCTION('YEAR', CURRENT_DATE) - FUNCTION('YEAR', c.personne.dateNaissance) BETWEEN :minAge AND :maxAge")
-    List<Candidat> findByAgeBetween(@Param("minAge") Integer minAge, 
-                                   @Param("maxAge") Integer maxAge);
+    List<Candidat> findByPersonneDateNaissanceBetween(LocalDate start, LocalDate end);
+
+
+
+
     
     // ✅ Recherche avancée avec multiple critères
-    @Query("SELECT c FROM Candidat c WHERE " +
+    @Query("SELECT DISTINCT c FROM Candidat c " +
+           "WHERE " +
            "(:nom IS NULL OR LOWER(c.personne.nom) LIKE LOWER(CONCAT('%', :nom, '%'))) AND " +
            "(:ville IS NULL OR LOWER(c.personne.ville) LIKE LOWER(CONCAT('%', :ville, '%'))) AND " +
-           "(:minAge IS NULL OR FUNCTION('YEAR', CURRENT_DATE) - FUNCTION('YEAR', c.personne.dateNaissance) >= :minAge) AND " +
-           "(:maxAge IS NULL OR FUNCTION('YEAR', CURRENT_DATE) - FUNCTION('YEAR', c.personne.dateNaissance) <= :maxAge)")
+           "(:start IS NULL OR c.personne.dateNaissance >= :start) AND " +
+           "(:end IS NULL OR c.personne.dateNaissance <= :end)")
     List<Candidat> searchCandidats(@Param("nom") String nom,
                                   @Param("ville") String ville,
-                                  @Param("minAge") Integer minAge,
-                                  @Param("maxAge") Integer maxAge);
+                                  @Param("start") LocalDate start,
+                                  @Param("end") LocalDate end);
 }
