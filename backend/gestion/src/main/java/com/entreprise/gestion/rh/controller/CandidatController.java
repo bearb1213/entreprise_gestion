@@ -30,6 +30,7 @@ import com.entreprise.gestion.rh.repository.CompetenceRepository;
 import com.entreprise.gestion.rh.repository.DiplomeFiliereRepository;
 import com.entreprise.gestion.rh.repository.LangueRepository;
 import com.entreprise.gestion.rh.repository.MetierRepository;
+import com.entreprise.gestion.rh.service.EmailService;
 
 @RestController
 @RequestMapping("/api/candidat")
@@ -43,6 +44,7 @@ public class CandidatController {
     private final DiplomeFiliereRepository diplomeFiliereRepository;
     private final MetierRepository metierRepository;
        private final NotesService notesService;
+       private final EmailService emailService;
     
     @PostMapping
     public ResponseEntity<CandidatDTO> createCandidat(@RequestBody CandidatDTO candidatDTO) {
@@ -75,6 +77,12 @@ public ResponseEntity<EvaluationResultDTO> postuler(
     // 4️⃣ Sauvegarder la note
     Evaluation evaluation = candidatService.getEvaluationById(1);
     notesService.saveNote((double)score, evaluation, candidature);
+    try {
+       emailService.sendConfirmationEmail(candidat.getPersonne().getEmail(),candidat.getPersonne().getPrenom());
+       
+    } catch (Exception e) {
+       // TODO: handle exception
+    }
 
     // 🔥 RETOURNER EvaluationResultDTO AU LIEU DE Map
     return ResponseEntity.ok(result);
