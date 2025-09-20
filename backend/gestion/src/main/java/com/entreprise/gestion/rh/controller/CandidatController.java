@@ -4,6 +4,14 @@ import com.entreprise.gestion.rh.dto.CandidatDTO;
 import com.entreprise.gestion.rh.dto.EvaluationResultDTO;
 import com.entreprise.gestion.rh.model.Besoin;
 import com.entreprise.gestion.rh.model.Candidat;
+import com.entreprise.gestion.rh.model.CandidatCompetence;
+import com.entreprise.gestion.rh.model.CandidatDiplomeFiliere;
+import com.entreprise.gestion.rh.model.CandidatLangue;
+import com.entreprise.gestion.rh.model.Competence;
+import com.entreprise.gestion.rh.model.DiplomeFiliere;
+import com.entreprise.gestion.rh.model.Experience;
+import com.entreprise.gestion.rh.model.Langue;
+import com.entreprise.gestion.rh.model.Metier;
 import com.entreprise.gestion.rh.service.CandidatService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
@@ -12,7 +20,12 @@ import com.entreprise.gestion.rh.model.Personne;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.stream.Collectors;
+import com.entreprise.gestion.rh.repository.CompetenceRepository;
+import com.entreprise.gestion.rh.repository.DiplomeFiliereRepository;
+import com.entreprise.gestion.rh.repository.LangueRepository;
+import com.entreprise.gestion.rh.repository.MetierRepository;
 
 @RestController
 @RequestMapping("/api/candidat")
@@ -21,6 +34,10 @@ import java.util.stream.Collectors;
 public class CandidatController {
     
     private final CandidatService candidatService;
+    private final CompetenceRepository competenceRepository;
+    private final LangueRepository langueRepository;
+    private final DiplomeFiliereRepository diplomeFiliereRepository;
+    private final MetierRepository metierRepository;
     
     @PostMapping
     public ResponseEntity<CandidatDTO> createCandidat(@RequestBody CandidatDTO candidatDTO) {
@@ -54,30 +71,101 @@ public class CandidatController {
         return ResponseEntity.ok(besoins);
     }
     
-    private Candidat convertToEntity(CandidatDTO dto) {
-        Candidat candidat = new Candidat();
-        candidat.setId(dto.getId());
-        candidat.setDescription(dto.getDescription());
-        
-        // Convertir PersonneDTO to Personne entity
-        if (dto.getPersonne() != null) {
-            Personne personne = new Personne();
-            personne.setId(dto.getPersonne().getId());
-            personne.setNom(dto.getPersonne().getNom());
-            personne.setPrenom(dto.getPersonne().getPrenom());
-            personne.setEmail(dto.getPersonne().getEmail());
-            personne.setDateNaissance(dto.getPersonne().getDateNaissance());
-            personne.setGenre(dto.getPersonne().getGenre());
-            personne.setVille(dto.getPersonne().getVille());
-            personne.setTelephone(dto.getPersonne().getTelephone());
-            candidat.setPersonne(personne);
-        }
-        
-        // Les autres conversions (compétences, langues, etc.) seraient implémentées ici
-        // Pour simplifier, nous les omettons dans cet exemple
-        
-        return candidat;
+   private Candidat convertToEntity(CandidatDTO dto) {
+    Candidat candidat = new Candidat();
+    candidat.setId(dto.getId());
+    candidat.setDescription(dto.getDescription());
+    
+    // Conversion de la personne
+    if (dto.getPersonne() != null) {
+        Personne personne = new Personne();
+        personne.setId(dto.getPersonne().getId());
+        personne.setNom(dto.getPersonne().getNom());
+        personne.setPrenom(dto.getPersonne().getPrenom());
+        personne.setEmail(dto.getPersonne().getEmail());
+        personne.setDateNaissance(dto.getPersonne().getDateNaissance());
+        personne.setGenre(dto.getPersonne().getGenre());
+        personne.setVille(dto.getPersonne().getVille());
+        personne.setTelephone(dto.getPersonne().getTelephone());
+        candidat.setPersonne(personne);
     }
+    
+    // 🔥 CHARGEMENT DES COMPÉTENCES
+    if (dto.getCompetencesIds() != null) {
+        List<CandidatCompetence> competences = dto.getCompetencesIds().stream()
+            .map(competenceId -> {
+                Competence competence = competenceRepository.findById(competenceId).orElse(null);
+                if (competence != null) {
+                    CandidatCompetence cc = new CandidatCompetence();
+                    cc.setCompetence(competence);
+                    cc.setCandidat(candidat);
+                    return cc;
+                }
+                return null;
+            })
+            .filter(Objects::nonNull)
+            .collect(Collectors.toList());
+        candidat.setCompetences(competences);
+    }
+    
+    // 🔥 CHARGEMENT DES LANGUES
+    if (dto.getLanguesIds() != null) {
+        List<CandidatLangue> langues = dto.getLanguesIds().stream()
+            .map(langueId -> {
+                Langue langue = langueRepository.findById(langueId).orElse(null);
+                if (langue != null) {
+                    CandidatLangue cl = new CandidatLangue();
+                    cl.setLangue(langue);
+                    cl.setCandidat(candidat);
+                    return cl;
+                }
+                return null;
+            })
+            .filter(Objects::nonNull)
+            .collect(Collectors.toList());
+        candidat.setLangues(langues);
+    }
+    
+    // 🔥 CHARGEMENT DES DIPLÔMES
+    if (dto.getDiplomesIds() != null) {
+        List<CandidatDiplomeFiliere> diplomes = dto.getDiplomesIds().stream()
+            .map(diplomeId -> {
+                DiplomeFiliere diplomeFiliere = diplomeFiliereRepository.findById(diplomeId).orElse(null);
+                if (diplomeFiliere != null) {
+                    CandidatDiplomeFiliere cdf = new CandidatDiplomeFiliere();
+                    cdf.setDiplomeFiliere(diplomeFiliere);
+                    cdf.setCandidat(candidat);
+                    return cdf;
+                }
+                return null;
+            })
+            .filter(Objects::nonNull)
+            .collect(Collectors.toList());
+        candidat.setDiplomes(diplomes);
+    }
+    
+    // 🔥 CHARGEMENT DES EXPÉRIENCES
+    if (dto.getExperiences() != null) {
+        List<Experience> experiences = dto.getExperiences().stream()
+            .map(expDTO -> {
+                Experience experience = new Experience();
+                experience.setNbAnnee(expDTO.getNbAnnee());
+                
+                // Charger le métier depuis la base
+                if (expDTO.getMetierId() != null) {
+                    Metier metier = metierRepository.findById(expDTO.getMetierId()).orElse(null);
+                    experience.setMetier(metier);
+                }
+                
+                experience.setCandidat(candidat);
+                return experience;
+            })
+            .collect(Collectors.toList());
+        candidat.setExperiences(experiences);
+    }
+    
+    return candidat;
+}
     
     private CandidatDTO convertToDTO(Candidat candidat) {
         CandidatDTO dto = new CandidatDTO();
