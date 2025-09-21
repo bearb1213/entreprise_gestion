@@ -13,7 +13,7 @@ import jakarta.servlet.http.HttpSession;
 import java.util.Map;
 
 @RestController
-@RequestMapping("/api/candidature")
+@RequestMapping("/api/public/candidature")
 @RequiredArgsConstructor
 public class CandidatureController {
 

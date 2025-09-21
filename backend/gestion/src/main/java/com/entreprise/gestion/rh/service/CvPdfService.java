@@ -12,6 +12,7 @@ import java.io.ByteArrayOutputStream;
 import java.time.LocalDate;
 import java.time.Period;
 import java.util.List;
+import com.itextpdf.text.pdf.draw.LineSeparator;
 
 @Service
 @RequiredArgsConstructor
@@ -25,10 +26,14 @@ public class CvPdfService {
     private final ExperienceRepository experienceRepository;
     private final MetierRepository metierRepository;
 
-    // Couleurs pour le design
-    private static final BaseColor HEADER_COLOR = new BaseColor(41, 128, 185);
-    private static final BaseColor SECTION_COLOR = new BaseColor(52, 152, 219);
-    private static final BaseColor TEXT_COLOR = new BaseColor(44, 62, 80);
+    // Palette de couleurs professionnelles
+    private static final BaseColor PRIMARY_COLOR = new BaseColor(37, 99, 128);      // Bleu marine professionnel
+    private static final BaseColor SECONDARY_COLOR = new BaseColor(88, 129, 87);   // Vert sophistiqué
+    private static final BaseColor ACCENT_COLOR = new BaseColor(207, 131, 81);     // Orange doux
+    private static final BaseColor TEXT_DARK = new BaseColor(33, 37, 41);         // Gris très foncé
+    private static final BaseColor TEXT_LIGHT = new BaseColor(108, 117, 125);     // Gris moyen
+    private static final BaseColor BACKGROUND_LIGHT = new BaseColor(248, 249, 250); // Gris très clair
+    private static final BaseColor WHITE = BaseColor.WHITE;
 
     /**
      * Vérifie si un CV peut être généré pour le candidat
@@ -38,10 +43,10 @@ public class CvPdfService {
     }
 
     /**
-     * Génère le PDF du CV
+     * Génère le PDF du CV avec un design professionnel
      */
     public ByteArrayInputStream generateCvPdf(Integer candidatId) throws DocumentException {
-        // Récupérer les données du candidat - conversion de Integer en Integer si nécessaire
+        // Récupérer les données du candidat
         Candidat candidat = candidatRepository.findById(candidatId)
                 .orElseThrow(() -> new RuntimeException("Candidat non trouvé"));
         
@@ -54,213 +59,300 @@ public class CvPdfService {
         List<Experience> experiences = experienceRepository.findByCandidatId(candidatId);
 
         // Configuration du document PDF
-        Document document = new Document(PageSize.A4, 36, 36, 90, 36);
+        Document document = new Document(PageSize.A4, 0, 0, 0, 0);
         ByteArrayOutputStream out = new ByteArrayOutputStream();
         PdfWriter writer = PdfWriter.getInstance(document, out);
         
-        // Ajouter un en-tête et pied de page personnalisé
-        writer.setPageEvent(new HeaderFooterPageEvent());
-        
+        // Pas d'événement de page personnalisé
         document.open();
 
-        // Police personnalisée
-        com.itextpdf.text.Font titleFont = new com.itextpdf.text.Font(com.itextpdf.text.Font.FontFamily.HELVETICA, 22, com.itextpdf.text.Font.BOLD, BaseColor.WHITE);
-        com.itextpdf.text.Font sectionFont = new com.itextpdf.text.Font(com.itextpdf.text.Font.FontFamily.HELVETICA, 14, com.itextpdf.text.Font.BOLD, SECTION_COLOR);
-        com.itextpdf.text.Font normalFont = new com.itextpdf.text.Font(com.itextpdf.text.Font.FontFamily.HELVETICA, 11, com.itextpdf.text.Font.NORMAL, TEXT_COLOR);
-        com.itextpdf.text.Font boldFont = new com.itextpdf.text.Font(com.itextpdf.text.Font.FontFamily.HELVETICA, 11, com.itextpdf.text.Font.BOLD, TEXT_COLOR);
+        // Définition des polices professionnelles
+        com.itextpdf.text.Font nameFont = new com.itextpdf.text.Font(com.itextpdf.text.Font.FontFamily.HELVETICA, 28, com.itextpdf.text.Font.BOLD, WHITE);
+        com.itextpdf.text.Font titleFont = new com.itextpdf.text.Font(com.itextpdf.text.Font.FontFamily.HELVETICA, 14, com.itextpdf.text.Font.NORMAL, WHITE);
+        com.itextpdf.text.Font sectionFont = new com.itextpdf.text.Font(com.itextpdf.text.Font.FontFamily.HELVETICA, 16, com.itextpdf.text.Font.BOLD, PRIMARY_COLOR);
+        com.itextpdf.text.Font normalFont = new com.itextpdf.text.Font(com.itextpdf.text.Font.FontFamily.HELVETICA, 11, com.itextpdf.text.Font.NORMAL, TEXT_DARK);
+        com.itextpdf.text.Font boldFont = new com.itextpdf.text.Font(com.itextpdf.text.Font.FontFamily.HELVETICA, 11, com.itextpdf.text.Font.BOLD, TEXT_DARK);
+        com.itextpdf.text.Font lightFont = new com.itextpdf.text.Font(com.itextpdf.text.Font.FontFamily.HELVETICA, 10, com.itextpdf.text.Font.NORMAL, TEXT_LIGHT);
 
-        // En-tête avec informations personnelles
-        PdfPTable headerTable = new PdfPTable(2);
-        headerTable.setWidthPercentage(100);
-        headerTable.setSpacingBefore(20);
-        headerTable.setSpacingAfter(20);
+        // Table principale avec deux colonnes (sidebar + contenu principal)
+        PdfPTable mainTable = new PdfPTable(new float[]{35f, 65f});
+        mainTable.setWidthPercentage(100);
+        mainTable.setSpacingAfter(0);
+
+        // SIDEBAR GAUCHE (informations personnelles)
+        PdfPCell sidebarCell = createSidebarContent(personne, candidat, competences, langues, 
+                                                   nameFont, titleFont, normalFont, boldFont, lightFont);
+        mainTable.addCell(sidebarCell);
+
+        // CONTENU PRINCIPAL DROITE
+        PdfPCell mainContentCell = createMainContent(experiences, diplomesFilieres, candidat,
+                                                   sectionFont, normalFont, boldFont, lightFont);
+        mainTable.addCell(mainContentCell);
+
+        document.add(mainTable);
+        // Ajouter un pied de page simple
+        Paragraph footer = new Paragraph("Page 1", 
+                new com.itextpdf.text.Font(com.itextpdf.text.Font.FontFamily.HELVETICA, 9, com.itextpdf.text.Font.NORMAL, TEXT_LIGHT));
+        footer.setAlignment(Element.ALIGN_RIGHT);
+        footer.setSpacingBefore(20);
+        document.add(footer);
+
+        document.close();
+        return new ByteArrayInputStream(out.toByteArray());
+    }
+
+    private PdfPCell createSidebarContent(Personne personne, Candidat candidat, 
+                                        List<Competence> competences, List<Langue> langues,
+                                        com.itextpdf.text.Font nameFont, com.itextpdf.text.Font titleFont,
+                                        com.itextpdf.text.Font normalFont, com.itextpdf.text.Font boldFont,
+                                        com.itextpdf.text.Font lightFont) throws DocumentException {
         
-        // Cellule pour les informations personnelles
-        PdfPCell infoCell = new PdfPCell();
-        infoCell.setBorder(PdfPCell.NO_BORDER);
-        infoCell.setPadding(10);
-        
-        // Nom et prénom
-        Paragraph name = new Paragraph(personne.getPrenom() + " " + personne.getNom().toUpperCase(), titleFont);
-        name.setAlignment(Element.ALIGN_LEFT);
-        infoCell.addElement(name);
-        
-        // Informations de contact
-        addContactInfo(infoCell, "Email: " + personne.getEmail(), normalFont);
-        addContactInfo(infoCell, "Téléphone: " + personne.getTelephone(), normalFont);
-        addContactInfo(infoCell, "Ville: " + personne.getVille(), normalFont);
-        
-        if (personne.getDateNaissance() != null) {
-            int age = Period.between(personne.getDateNaissance(), LocalDate.now()).getYears();
-            addContactInfo(infoCell, "Âge: " + age + " ans", normalFont);
-        }
-        
-        // Cellule pour la photo (si disponible)
-        PdfPCell photoCell = new PdfPCell();
-        photoCell.setBorder(PdfPCell.NO_BORDER);
-        photoCell.setHorizontalAlignment(Element.ALIGN_RIGHT);
-        
+        PdfPCell sidebarCell = new PdfPCell();
+        sidebarCell.setBackgroundColor(PRIMARY_COLOR);
+        sidebarCell.setBorder(PdfPCell.NO_BORDER);
+        sidebarCell.setPaddingLeft(25);
+        sidebarCell.setPaddingRight(25);
+        sidebarCell.setPaddingTop(40);
+        sidebarCell.setPaddingBottom(40);
+
+        // Photo de profil
         if (personne.getImage() != null && !personne.getImage().isEmpty()) {
             try {
                 Image photo = Image.getInstance(personne.getImage());
-                photo.scaleToFit(80, 80);
+                photo.scaleToFit(120, 120);
+                photo.setAlignment(Element.ALIGN_CENTER);
+                
+                // Création d'un conteneur centré pour la photo
+                PdfPTable photoTable = new PdfPTable(1);
+                photoTable.setWidthPercentage(100);
+                PdfPCell photoCell = new PdfPCell();
+                photoCell.setBorder(PdfPCell.NO_BORDER);
+                photoCell.setHorizontalAlignment(Element.ALIGN_CENTER);
+                photoCell.setPaddingBottom(20);
                 photoCell.addElement(photo);
+                photoTable.addCell(photoCell);
+                
+                sidebarCell.addElement(photoTable);
             } catch (Exception e) {
-                // En cas d'erreur de chargement de l'image, on affiche un placeholder
-                Paragraph noPhoto = new Paragraph("Photo non disponible", normalFont);
-                photoCell.addElement(noPhoto);
+                // Placeholder élégant
+                Paragraph noPhoto = new Paragraph("📷", new com.itextpdf.text.Font(com.itextpdf.text.Font.FontFamily.HELVETICA, 40, com.itextpdf.text.Font.NORMAL, WHITE));
+                noPhoto.setAlignment(Element.ALIGN_CENTER);
+                noPhoto.setSpacingAfter(20);
+                sidebarCell.addElement(noPhoto);
             }
         }
-        
-        headerTable.addCell(infoCell);
-        headerTable.addCell(photoCell);
-        
-        // Appliquer un fond coloré à l'en-tête
-        for (PdfPCell cell : headerTable.getRows().get(0).getCells()) {
-            cell.setBackgroundColor(HEADER_COLOR);
+
+        // Nom et prénom
+        Paragraph name = new Paragraph(personne.getPrenom() + " " + personne.getNom().toUpperCase(), nameFont);
+        name.setAlignment(Element.ALIGN_CENTER);
+        name.setSpacingAfter(5);
+        sidebarCell.addElement(name);
+
+        // Titre professionnel (basé sur l'expérience principale)
+        String titreProf = "Candidat";
+        if (!candidat.getExperiences().isEmpty()) {
+            titreProf = candidat.getExperiences().get(0).getMetier().getLibelle();
         }
+        Paragraph titre = new Paragraph(titreProf, titleFont);
+        titre.setAlignment(Element.ALIGN_CENTER);
+        titre.setSpacingAfter(25);
+        sidebarCell.addElement(titre);
+
+        // Contact
+        addSidebarSection("CONTACT", sidebarCell, boldFont, WHITE);
+        addContactItem("✉", personne.getEmail(), sidebarCell, normalFont, WHITE);
+        addContactItem("📞", personne.getTelephone(), sidebarCell, normalFont, WHITE);
+        addContactItem("📍", personne.getVille(), sidebarCell, normalFont, WHITE);
         
-        document.add(headerTable);
-        
-        // Description du candidat
-        if (candidat.getDescription() != null && !candidat.getDescription().isEmpty()) {
-            addSectionTitle("Profil", sectionFont, document);
-            Paragraph description = new Paragraph(candidat.getDescription(), normalFont);
-            description.setSpacingAfter(15);
-            document.add(description);
+        if (personne.getDateNaissance() != null) {
+            int age = Period.between(personne.getDateNaissance(), LocalDate.now()).getYears();
+            addContactItem("🎂", age + " ans", sidebarCell, normalFont, WHITE);
         }
-        
+
         // Compétences
         if (competences != null && !competences.isEmpty()) {
-            addSectionTitle("Compétences", sectionFont, document);
-            
-            PdfPTable competencesTable = new PdfPTable(2);
-            competencesTable.setWidthPercentage(100);
-            competencesTable.setSpacingBefore(5);
-            competencesTable.setSpacingAfter(15);
-            
+            addSidebarSection("COMPÉTENCES", sidebarCell, boldFont, WHITE);
             for (Competence competence : competences) {
-                PdfPCell cell = new PdfPCell(new Phrase("• " + competence.getLibelle(), normalFont));
-                cell.setBorder(PdfPCell.NO_BORDER);
-                competencesTable.addCell(cell);
+                addSkillItem(competence.getLibelle(), sidebarCell, normalFont, lightFont);
             }
-            
-            // Remplir les cellules vides pour un affichage correct
-            if (competences.size() % 2 != 0) {
-                PdfPCell emptyCell = new PdfPCell(new Phrase(""));
-                emptyCell.setBorder(PdfPCell.NO_BORDER);
-                competencesTable.addCell(emptyCell);
-            }
-            
-            document.add(competencesTable);
         }
+
+        // Langues
+        if (langues != null && !langues.isEmpty()) {
+            addSidebarSection("LANGUES", sidebarCell, boldFont, WHITE);
+            for (Langue langue : langues) {
+                addLanguageItem(langue.getLibelle(), "Maîtrisé", sidebarCell, normalFont, lightFont);
+            }
+        }
+
+        return sidebarCell;
+    }
+
+    private PdfPCell createMainContent(List<Experience> experiences, List<DiplomeFiliere> diplomesFilieres,
+                                     Candidat candidat, com.itextpdf.text.Font sectionFont,
+                                     com.itextpdf.text.Font normalFont, com.itextpdf.text.Font boldFont,
+                                     com.itextpdf.text.Font lightFont) throws DocumentException {
         
-        // Expériences professionnelles
+        PdfPCell mainContentCell = new PdfPCell();
+        mainContentCell.setBackgroundColor(WHITE);
+        mainContentCell.setBorder(PdfPCell.NO_BORDER);
+        mainContentCell.setPaddingLeft(30);
+        mainContentCell.setPaddingRight(30);
+        mainContentCell.setPaddingTop(40);
+        mainContentCell.setPaddingBottom(40);
+
+        // Profil professionnel
+        if (candidat.getDescription() != null && !candidat.getDescription().isEmpty()) {
+            addMainSection("PROFIL PROFESSIONNEL", mainContentCell, sectionFont);
+            Paragraph description = new Paragraph(candidat.getDescription(), normalFont);
+            description.setAlignment(Element.ALIGN_JUSTIFIED);
+            description.setSpacingAfter(25);
+            description.setLeading(0, 1.4f);
+            mainContentCell.addElement(description);
+        }
+
+        // Expérience professionnelle
         if (experiences != null && !experiences.isEmpty()) {
-            addSectionTitle("Expériences professionnelles", sectionFont, document);
+            addMainSection("EXPÉRIENCE PROFESSIONNELLE", mainContentCell, sectionFont);
             
             for (Experience experience : experiences) {
                 Metier metier = metierRepository.findById(experience.getMetier().getId().intValue())
                         .orElse(new Metier());
                 
-                Paragraph expTitle = new Paragraph(metier.getLibelle(), boldFont);
-                Paragraph expDuration = new Paragraph(experience.getNbAnnee() + " année(s) d'expérience", normalFont);
-                expDuration.setSpacingAfter(5);
+                // Titre du poste avec design moderne
+                PdfPTable expTable = new PdfPTable(2);
+                expTable.setWidthPercentage(100);
+                expTable.setSpacingBefore(5);
+                expTable.setSpacingAfter(15);
                 
-                document.add(expTitle);
-                document.add(expDuration);
+                PdfPCell titleCell = new PdfPCell(new Phrase(metier.getLibelle(), boldFont));
+                titleCell.setBorder(PdfPCell.NO_BORDER);
+                titleCell.setPaddingBottom(5);
+                
+                PdfPCell durationCell = new PdfPCell(new Phrase(experience.getNbAnnee() + " année(s)", lightFont));
+                durationCell.setBorder(PdfPCell.NO_BORDER);
+                durationCell.setHorizontalAlignment(Element.ALIGN_RIGHT);
+                durationCell.setPaddingBottom(5);
+                
+                expTable.addCell(titleCell);
+                expTable.addCell(durationCell);
+                
+                mainContentCell.addElement(expTable);
+                
+                // Ligne de séparation subtile
+                addSubtleSeparator(mainContentCell);
             }
-            document.add(new Paragraph(" ")); // Espacement
         }
-        
-        // Diplômes et filières
+
+        // Formation
         if (diplomesFilieres != null && !diplomesFilieres.isEmpty()) {
-            addSectionTitle("Formation", sectionFont, document);
+            addMainSection("FORMATION", mainContentCell, sectionFont);
             
             for (DiplomeFiliere diplomeFiliere : diplomesFilieres) {
-                String formation = diplomeFiliere.getDiplome().getLibelle() + " - " + 
-                                  diplomeFiliere.getFiliere().getLibelle();
+                PdfPTable formationTable = new PdfPTable(1);
+                formationTable.setWidthPercentage(100);
+                formationTable.setSpacingBefore(5);
+                formationTable.setSpacingAfter(10);
                 
-                Paragraph diplome = new Paragraph("• " + formation, normalFont);
-                document.add(diplome);
+                String formation = diplomeFiliere.getDiplome().getLibelle();
+                String filiere = diplomeFiliere.getFiliere().getLibelle();
+                
+                Paragraph formationTitle = new Paragraph(formation, boldFont);
+                Paragraph filiereDesc = new Paragraph(filiere, normalFont);
+                filiereDesc.setSpacingAfter(5);
+                
+                PdfPCell formationCell = new PdfPCell();
+                formationCell.setBorder(PdfPCell.NO_BORDER);
+                formationCell.addElement(formationTitle);
+                formationCell.addElement(filiereDesc);
+                formationCell.setPaddingLeft(10);
+                formationCell.setBorderWidthLeft(3);
+                formationCell.setBorderColorLeft(ACCENT_COLOR);
+                
+                formationTable.addCell(formationCell);
+                mainContentCell.addElement(formationTable);
             }
-            document.add(new Paragraph(" ")); // Espacement
         }
-        
-        // Langues
-        if (langues != null && !langues.isEmpty()) {
-            addSectionTitle("Langues", sectionFont, document);
-            
-            StringBuilder languesStr = new StringBuilder();
-            for (int i = 0; i < langues.size(); i++) {
-                languesStr.append(langues.get(i).getLibelle());
-                if (i < langues.size() - 1) {
-                    languesStr.append(", ");
-                }
-            }
-            
-            Paragraph languesParagraph = new Paragraph(languesStr.toString(), normalFont);
-            languesParagraph.setSpacingAfter(15);
-            document.add(languesParagraph);
-        }
-        
-        document.close();
-        return new ByteArrayInputStream(out.toByteArray());
+
+        return mainContentCell;
     }
-    
-    private void addContactInfo(PdfPCell cell, String text, com.itextpdf.text.Font font) {
-        Paragraph p = new Paragraph(text, font);
-        p.setSpacingAfter(2);
-        cell.addElement(p);
+
+    private void addSidebarSection(String title, PdfPCell cell, com.itextpdf.text.Font font, BaseColor color) throws DocumentException {
+        Paragraph sectionTitle = new Paragraph(title, new com.itextpdf.text.Font(font.getBaseFont(), 12, com.itextpdf.text.Font.BOLD, color));
+        sectionTitle.setSpacingBefore(20);
+        sectionTitle.setSpacingAfter(10);
+        cell.addElement(sectionTitle);
+        
+        // Ligne de séparation
+        LineSeparator separator = new LineSeparator();
+        separator.setLineColor(ACCENT_COLOR);
+        separator.setLineWidth(2);
+        Paragraph separatorPara = new Paragraph();
+        separatorPara.add(new Chunk(separator));
+        separatorPara.setSpacingAfter(15);
+        cell.addElement(separatorPara);
     }
-    
-    private void addSectionTitle(String title, com.itextpdf.text.Font font, Document document) throws DocumentException {
+
+    private void addMainSection(String title, PdfPCell cell, com.itextpdf.text.Font font) throws DocumentException {
         Paragraph sectionTitle = new Paragraph(title, font);
-        sectionTitle.setSpacingBefore(10);
-        sectionTitle.setSpacingAfter(5);
-        document.add(sectionTitle);
+        sectionTitle.setSpacingBefore(15);
+        sectionTitle.setSpacingAfter(15);
+        cell.addElement(sectionTitle);
         
-        // Ligne de séparation - Correction de setColor
-        Paragraph separator = new Paragraph();
-        separator.setSpacingAfter(10);
-        Chunk line = new Chunk("_________________________________________________________________________");
-        // Correction: Utiliser setFont avec une police de la bonne couleur
-        com.itextpdf.text.Font lineFont = new com.itextpdf.text.Font(com.itextpdf.text.Font.FontFamily.HELVETICA, 10, com.itextpdf.text.Font.NORMAL, SECTION_COLOR);
-        line.setFont(lineFont);
-        separator.add(line);
-        document.add(separator);
+        // Ligne de séparation moderne
+        LineSeparator separator = new LineSeparator();
+        separator.setLineColor(SECONDARY_COLOR);
+        separator.setLineWidth(3);
+        Paragraph separatorPara = new Paragraph();
+        separatorPara.add(new Chunk(separator));
+        separatorPara.setSpacingAfter(20);
+        cell.addElement(separatorPara);
     }
-    
-    // Classe interne pour l'en-tête et pied de page
-    class HeaderFooterPageEvent extends PdfPageEventHelper {
-        private PdfTemplate template;
 
-        public void onOpenDocument(PdfWriter writer, Document document) {
-            template = writer.getDirectContent().createTemplate(30, 16);
-        }
-
-        public void onEndPage(PdfWriter writer, Document document) {
-            PdfPTable footer = new PdfPTable(3);
-            footer.setTotalWidth(527);
-            footer.setLockedWidth(true);
-            
-            // Cellule vide pour centrer le texte
-            PdfPCell emptyCell = new PdfPCell(new Phrase(""));
-            emptyCell.setBorder(PdfPCell.NO_BORDER);
-            footer.addCell(emptyCell);
-            
-            // Numéro de page
-            PdfPCell pageNumber = new PdfPCell(new Phrase("Page " + writer.getPageNumber(), 
-                    new com.itextpdf.text.Font(com.itextpdf.text.Font.FontFamily.HELVETICA, 9, com.itextpdf.text.Font.NORMAL, BaseColor.GRAY)));
-            pageNumber.setHorizontalAlignment(Element.ALIGN_CENTER);
-            pageNumber.setBorder(PdfPCell.NO_BORDER);
-            footer.addCell(pageNumber);
-            
-            // Cellule vague pour l'alignement
-            footer.addCell(emptyCell);
-            
-            // Positionner le pied de page
-            footer.writeSelectedRows(0, -1, 34, 50, writer.getDirectContent());
+    private void addContactItem(String icon, String text, PdfPCell cell, com.itextpdf.text.Font font, BaseColor color) {
+        if (text != null && !text.trim().isEmpty()) {
+            Paragraph contact = new Paragraph();
+            contact.add(new Chunk(icon + " ", new com.itextpdf.text.Font(font.getBaseFont(), 10, com.itextpdf.text.Font.NORMAL, ACCENT_COLOR)));
+            contact.add(new Chunk(text, new com.itextpdf.text.Font(font.getBaseFont(), 10, com.itextpdf.text.Font.NORMAL, color)));
+            contact.setSpacingAfter(8);
+            cell.addElement(contact);
         }
     }
+
+    private void addSkillItem(String skill, PdfPCell cell, com.itextpdf.text.Font font, com.itextpdf.text.Font lightFont) {
+        Paragraph skillPara = new Paragraph();
+        skillPara.add(new Chunk("● ", new com.itextpdf.text.Font(font.getBaseFont(), 10, com.itextpdf.text.Font.NORMAL, ACCENT_COLOR)));
+        skillPara.add(new Chunk(skill, new com.itextpdf.text.Font(font.getBaseFont(), 10, com.itextpdf.text.Font.NORMAL, WHITE)));
+        skillPara.setSpacingAfter(6);
+        cell.addElement(skillPara);
+    }
+
+    private void addLanguageItem(String langue, String niveau, PdfPCell cell, com.itextpdf.text.Font font, com.itextpdf.text.Font lightFont) {
+        PdfPTable langTable = new PdfPTable(2);
+        langTable.setWidthPercentage(100);
+        langTable.setSpacingAfter(6);
+        
+        PdfPCell langCell = new PdfPCell(new Phrase(langue, new com.itextpdf.text.Font(font.getBaseFont(), 10, com.itextpdf.text.Font.NORMAL, WHITE)));
+        langCell.setBorder(PdfPCell.NO_BORDER);
+        
+        PdfPCell niveauCell = new PdfPCell(new Phrase(niveau, new com.itextpdf.text.Font(lightFont.getBaseFont(), 9, com.itextpdf.text.Font.ITALIC, BACKGROUND_LIGHT)));
+        niveauCell.setBorder(PdfPCell.NO_BORDER);
+        niveauCell.setHorizontalAlignment(Element.ALIGN_RIGHT);
+        
+        langTable.addCell(langCell);
+        langTable.addCell(niveauCell);
+        cell.addElement(langTable);
+    }
+
+    private void addSubtleSeparator(PdfPCell cell) throws DocumentException {
+        LineSeparator separator = new LineSeparator();
+        separator.setLineColor(BACKGROUND_LIGHT);
+        separator.setLineWidth(1);
+        Paragraph separatorPara = new Paragraph();
+        separatorPara.add(new Chunk(separator));
+        separatorPara.setSpacingAfter(10);
+        cell.addElement(separatorPara);
+    }
+
+
 }

@@ -10,6 +10,7 @@ import com.entreprise.gestion.rh.repository.CandidatureRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.messaging.simp.SimpMessagingTemplate;
 
 import java.time.LocalDateTime;
 
@@ -20,6 +21,7 @@ public class CandidatureService {
     private final CandidatRepository candidatRepository;
     private final BesoinRepository besoinRepository;
     private final CandidatureRepository candidatureRepository;
+    private final SimpMessagingTemplate messagingTemplate;
 
     @Transactional
     public void candidater(String mail, Integer idBesoin) throws MyException {
@@ -47,6 +49,11 @@ public class CandidatureService {
                     .build();
 
             candidatureRepository.save(candidature);
+
+            String notifMessage = "Nouveau candidat pour le poste : " + besoin.getMetier().getLibelle() +
+                                  " (Candidat : " + candidat.getPersonne().getNom() + " " +
+                                  candidat.getPersonne().getPrenom() + ")";
+            messagingTemplate.convertAndSend("/topic/notifications", notifMessage);
 
         } catch (MyException e) {
             throw e;

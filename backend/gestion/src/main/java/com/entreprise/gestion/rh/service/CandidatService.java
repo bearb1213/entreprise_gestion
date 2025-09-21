@@ -6,6 +6,9 @@ import com.entreprise.gestion.rh.model.DiplomeFiliere;
 import com.entreprise.gestion.rh.model.Experience;
 import com.entreprise.gestion.rh.model.Langue;
 import com.entreprise.gestion.rh.model.Personne;
+import com.entreprise.gestion.rh.model.Besoin;
+import com.entreprise.gestion.rh.model.Candidature;
+
 import com.entreprise.gestion.rh.repository.CandidatRepository;
 import com.entreprise.gestion.rh.repository.CompetenceRepository;
 import com.entreprise.gestion.rh.repository.DiplomeFiliereRepository;
@@ -193,5 +196,165 @@ public class CandidatService {
         return candidatRepository.findByEmail(email)
                 .orElseThrow(() -> new MyException("Candidat introuvable avec email=" + email));
     }
+
+    @Transactional(readOnly = true)
+    public List<Candidat> filtrerCandidats(Map<String, Object> criteres) {
+        List<Candidat> candidats = candidatRepository.findAll();
+
+        // Filtrage par âge
+        Integer minAge = (Integer) criteres.get("minAge");
+        Integer maxAge = (Integer) criteres.get("maxAge");
+        if (minAge != null || maxAge != null) {
+            candidats = candidats.stream()
+                .filter(c -> {
+                    int age = LocalDate.now().getYear() - c.getPersonne().getDateNaissance().getYear();
+                    boolean okMin = (minAge == null || age >= minAge);
+                    boolean okMax = (maxAge == null || age <= maxAge);
+                    return okMin && okMax;
+                })
+                .collect(Collectors.toList());
+        }
+
+        // Filtrage par ville
+        String ville = (String) criteres.get("ville");
+        if (ville != null) {
+            candidats = candidats.stream()
+                .filter(c -> ville.equalsIgnoreCase(c.getPersonne().getVille()))
+                .collect(Collectors.toList());
+        }
+
+        // Filtrage par compétences (ids)
+        List<Integer> competencesIds = (List<Integer>) criteres.get("competences");
+        if (competencesIds != null && !competencesIds.isEmpty()) {
+            candidats = candidats.stream()
+                .filter(c -> c.getCompetences().stream()
+                    .map(Competence::getId)
+                    .collect(Collectors.toSet())
+                    .containsAll(competencesIds))
+                .collect(Collectors.toList());
+        }
+
+        // Filtrage par langues (ids)
+        List<Integer> languesIds = (List<Integer>) criteres.get("langues");
+        if (languesIds != null && !languesIds.isEmpty()) {
+            candidats = candidats.stream()
+                .filter(c -> c.getLangues().stream()
+                    .map(Langue::getId)
+                    .collect(Collectors.toSet())
+                    .containsAll(languesIds))
+                .collect(Collectors.toList());
+        }
+
+        // Filtrage par diplômes filières (ids)
+        List<Integer> diplomeIds = (List<Integer>) criteres.get("diplomes");
+        if (diplomeIds != null && !diplomeIds.isEmpty()) {
+            candidats = candidats.stream()
+                .filter(c -> c.getDiplomeFilieres().stream()
+                    .map(DiplomeFiliere::getId)
+                    .collect(Collectors.toSet())
+                    .containsAll(diplomeIds))
+                .collect(Collectors.toList());
+        }
+
+        // Filtrage par expériences (Map<metierId, minAnnee>)
+        Map<Integer, Integer> experiences = (Map<Integer, Integer>) criteres.get("experiences");
+        if (experiences != null && !experiences.isEmpty()) {
+            candidats = candidats.stream()
+                .filter(c -> {
+                    Map<Integer, Integer> expMap = c.getExperiences().stream()
+                            .collect(Collectors.toMap(e -> e.getMetier().getId(), Experience::getNbAnnee));
+                    return experiences.entrySet().stream()
+                            .allMatch(e -> expMap.getOrDefault(e.getKey(), 0) >= e.getValue());
+                })
+                .collect(Collectors.toList());
+        }
+
+        return candidats;
+    }
+
+    public List<Candidat> filtrerCandidatsParBesoinEtCritere(Besoin besoin, Map<String, Object> criteres) {
+        // 1. Récupérer uniquement les candidats ayant déjà postulé à ce besoin
+        List<Candidat> candidatsPostules = besoin.getCandidatures()
+                                                .stream()
+                                                .map(Candidature::getCandidat)
+                                                .distinct()
+                                                .collect(Collectors.toList());
+
+        // 2. Appliquer les filtres selon les critères
+        return candidatsPostules.stream().filter(candidat -> {
+
+            // Filtre âge
+            if (criteres.containsKey("ageMin") || criteres.containsKey("ageMax")) {
+                LocalDate dateNaissance = candidat.getPersonne().getDateNaissance();
+                int age = LocalDate.now().getYear() - dateNaissance.getYear();
+                Integer ageMin = (Integer) criteres.get("ageMin");
+                Integer ageMax = (Integer) criteres.get("ageMax");
+                if ((ageMin != null && age < ageMin) || (ageMax != null && age > ageMax)) {
+                    return false;
+                }
+            }
+
+            // Filtre ville
+            if (criteres.containsKey("ville")) {
+                String ville = (String) criteres.get("ville");
+                if (!candidat.getPersonne().getVille().equalsIgnoreCase(ville)) {
+                    return false;
+                }
+            }
+
+            // Filtre compétences
+            if (criteres.containsKey("competences")) {
+                List<Integer> competencesIds = (List<Integer>) criteres.get("competences");
+                List<Integer> candidatCompIds = candidat.getCompetences()
+                                                    .stream()
+                                                    .map(Competence::getId)
+                                                    .collect(Collectors.toList());
+                if (!candidatCompIds.containsAll(competencesIds)) {
+                    return false;
+                }
+            }
+
+            // Filtre langues
+            if (criteres.containsKey("langues")) {
+                List<Integer> languesIds = (List<Integer>) criteres.get("langues");
+                List<Integer> candidatLanguesIds = candidat.getLangues()
+                                                        .stream()
+                                                        .map(Langue::getId)
+                                                        .collect(Collectors.toList());
+                if (!candidatLanguesIds.containsAll(languesIds)) {
+                    return false;
+                }
+            }
+
+            // Filtre expériences
+            if (criteres.containsKey("experiences")) {
+                Map<Integer, Integer> expMap = (Map<Integer, Integer>) criteres.get("experiences");
+                for (Map.Entry<Integer, Integer> entry : expMap.entrySet()) {
+                    Integer metierId = entry.getKey();
+                    Integer nbAnneeMin = entry.getValue();
+                    boolean hasExp = candidat.getExperiences().stream()
+                                            .anyMatch(exp -> exp.getMetier().getId().equals(metierId)
+                                                            && exp.getNbAnnee() >= nbAnneeMin);
+                    if (!hasExp) return false;
+                }
+            }
+
+            // Filtre diplômes/filières
+            if (criteres.containsKey("diplomes")) {
+                List<Integer> diplomeIds = (List<Integer>) criteres.get("diplomes");
+                List<Integer> candidatDiplomeIds = candidat.getDiplomeFilieres()
+                                                        .stream()
+                                                        .map(DiplomeFiliere::getId)
+                                                        .collect(Collectors.toList());
+                if (!candidatDiplomeIds.containsAll(diplomeIds)) {
+                    return false;
+                }
+            }
+
+            return true; // Si tous les critères sont respectés
+        }).collect(Collectors.toList());
+    }
+
+
     
 }
