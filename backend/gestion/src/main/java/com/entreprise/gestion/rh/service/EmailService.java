@@ -1,6 +1,7 @@
 package com.entreprise.gestion.rh.service;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.core.io.ByteArrayResource;
 import org.springframework.mail.SimpleMailMessage;
 import org.springframework.mail.javamail.JavaMailSender;
 import org.springframework.mail.javamail.MimeMessageHelper;
@@ -266,5 +267,17 @@ public class EmailService {
             """.formatted(candidateName);
         
         sendHtmlEmail(to, subject, htmlContent);
+    }
+    public void sendHtmlEmailWithAttachment(String to, String subject, String htmlContent,String fileName,byte[] attachmentData,String contentType) throws MessagingException {
+        MimeMessage message = mailSender.createMimeMessage();
+        MimeMessageHelper helper = new MimeMessageHelper(message, true, "UTF-8");
+        
+        helper.setTo(to);
+        helper.setSubject(subject);
+        helper.setText(htmlContent, true);
+        helper.setFrom("noreply@entreprise.com");
+        helper.addAttachment(fileName, new ByteArrayResource(attachmentData),contentType);
+        
+        mailSender.send(message);
     }
 }
