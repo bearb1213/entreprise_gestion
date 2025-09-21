@@ -1,6 +1,6 @@
 package com.entreprise.gestion.rh.controller;
 
-import com.entreprise.gestion.rh.model.Besoin;
+
 import com.entreprise.gestion.rh.dto.BesoinDTO;
 import com.entreprise.gestion.rh.service.BesoinService;
 import org.springframework.beans.factory.annotation.Autowired;
