@@ -1,11 +1,13 @@
 package com.entreprise.gestion.rh.service;
 
+import java.util.Comparator;
 import java.util.List;
 import java.util.Optional;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
+import com.entreprise.gestion.rh.dto.BesoinCriteria;
 import com.entreprise.gestion.rh.dto.BesoinDTO;
 import com.entreprise.gestion.rh.dto.BesoinRequest;
 import com.entreprise.gestion.rh.model.Besoin;
@@ -130,5 +132,47 @@ public class BesoinService {
         }
 
         return besoinRepository.save(besoin);
+    }
+
+     public List<Besoin> filterBesoins(BesoinCriteria criteria) {
+        return besoinRepository.findAll().stream()
+
+                .filter(b -> criteria.getStatut() == null || 
+                             (b.getStatut() != null && b.getStatut().equals(criteria.getStatut())))
+
+                .filter(b -> criteria.getMinAge() == null || b.getMinAge() >= criteria.getMinAge())
+                .filter(b -> criteria.getMaxAge() == null || b.getMaxAge() <= criteria.getMaxAge())
+
+                .filter(b -> criteria.getMinExperience() == null || b.getMinExperience() >= criteria.getMinExperience())
+
+                .filter(b -> criteria.getDepartementId() == null || 
+                             (b.getDepartement() != null && b.getDepartement().getId().equals(criteria.getDepartementId())))
+
+                .filter(b -> criteria.getMetierId() == null || 
+                             (b.getMetier() != null && b.getMetier().getId().equals(criteria.getMetierId())))
+
+                .filter(b -> criteria.getCompetenceIds() == null || criteria.getCompetenceIds().isEmpty() ||
+                             b.getBesoinCompetences().stream()
+                                     .map(bc -> bc.getCompetence().getId())
+                                     .collect(java.util.stream.Collectors.toSet())
+                                     .containsAll(criteria.getCompetenceIds()))
+
+                .filter(b -> criteria.getLangueIds() == null || criteria.getLangueIds().isEmpty() ||
+                             b.getBesoinLangues().stream()
+                                     .map(bl -> bl.getLangue().getId())
+                                     .collect(java.util.stream.Collectors.toSet())
+                                     .containsAll(criteria.getLangueIds()))
+
+                .filter(b -> criteria.getDiplomeFiliereIds() == null || criteria.getDiplomeFiliereIds().isEmpty() ||
+                             b.getBesoinDiplomeFilieres().stream()
+                                     .map(bd -> bd.getDiplomeFiliere().getId())
+                                     .collect(java.util.stream.Collectors.toSet())
+                                     .containsAll(criteria.getDiplomeFiliereIds()))
+
+                .sorted(Comparator
+                        .comparing(Besoin::getCoeffExperience).reversed()
+                        .thenComparing(Besoin::getNbPosteDispo).reversed()
+                        .thenComparing(Besoin::getMinAge))
+                .toList();
     }
 }
