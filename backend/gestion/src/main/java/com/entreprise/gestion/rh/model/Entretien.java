@@ -19,7 +19,7 @@ public class Entretien {
     @Column(name = "date_heure_debut")
     private LocalDateTime dateHeureDebut;
     
-    @ManyToOne(fetch = FetchType.LAZY)
+    @ManyToOne(fetch = FetchType.EAGER)
     @JoinColumn(name = "candidature_id")
     private Candidature candidature;
 }

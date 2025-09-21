@@ -23,7 +23,7 @@ public class Choix {
     @Column(name = "coeff")
     private Integer coeff;
     
-    @ManyToOne(fetch = FetchType.LAZY)
+    @ManyToOne(fetch = FetchType.EAGER)
     @JoinColumn(name = "question_id", nullable = false)
     private Question question;
     

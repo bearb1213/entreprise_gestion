@@ -24,11 +24,11 @@ public class Candidature {
     @Column(name = "date_candidature")
     private LocalDateTime dateCandidature;
     
-    @ManyToOne(fetch = FetchType.LAZY)
+    @ManyToOne(fetch = FetchType.EAGER)
     @JoinColumn(name = "besoin_id", nullable = false)
     private Besoin besoin;
     
-    @ManyToOne(fetch = FetchType.LAZY)
+    @ManyToOne(fetch = FetchType.EAGER)
     @JoinColumn(name = "candidat_id", nullable = false)
     private Candidat candidat;
     

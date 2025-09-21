@@ -23,11 +23,11 @@ public class Notes {
     @Column(name = "date_entree")
     private LocalDateTime dateEntree;
     
-    @ManyToOne(fetch = FetchType.LAZY)
+    @ManyToOne(fetch = FetchType.EAGER)
     @JoinColumn(name = "evaluation_id", nullable = false)
     private Evaluation evaluation;
     
-    @ManyToOne(fetch = FetchType.LAZY)
+    @ManyToOne(fetch = FetchType.EAGER)
     @JoinColumn(name = "candidature_id", nullable = false)
     private Candidature candidature;
 }

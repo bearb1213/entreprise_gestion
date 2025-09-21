@@ -17,11 +17,11 @@ public class BesoinLangue {
     
     private Integer coeff;
     
-    @ManyToOne(fetch = FetchType.LAZY)
+    @ManyToOne(fetch = FetchType.EAGER)
     @JoinColumn(name = "besoin_id")
     private Besoin besoin;
     
-    @ManyToOne(fetch = FetchType.LAZY)
+    @ManyToOne(fetch = FetchType.EAGER)
     @JoinColumn(name = "langue_id")
     private Langue langue;
 }

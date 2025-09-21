@@ -25,12 +25,4 @@ public class MetierService {
         return metierRepository.findById(id).orElse(null);
     }
 
-    public Map<String, Object> getAllMap() {
-        return metierRepository.findAll()
-                .stream()
-                .collect(Collectors.toMap(
-                        m -> String.valueOf(m.getId()),
-                        Metier::getLibelle
-                ));
-    }
 }

@@ -11,21 +11,19 @@ import java.util.List;
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
+
 public class DiplomeFiliere {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Integer id;
     
-    @ManyToOne(fetch = FetchType.LAZY)
+    @ManyToOne(fetch = FetchType.EAGER)
     @JoinColumn(name = "filiere_id")
     private Filiere filiere;
     
-    @ManyToOne(fetch = FetchType.LAZY)
+    @ManyToOne(fetch = FetchType.EAGER)
     @JoinColumn(name = "diplome_id")
     private Diplome diplome;
-    
-    @OneToMany(mappedBy = "diplomeFiliere", fetch = FetchType.LAZY)
-    private List<CandidatDiplomeFiliere> candidatDiplomeFilieres;
     
     @OneToMany(mappedBy = "diplomeFiliere" , fetch = FetchType.LAZY)
     private List<BesoinDiplomeFiliere> besoinDiplomeFilieres;

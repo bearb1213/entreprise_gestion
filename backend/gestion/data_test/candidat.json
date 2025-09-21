@@ -1,0 +1,26 @@
+{
+  "nom": "Andriantsoa",
+  "prenom": "Gaellane",
+  "email": "gael@example.com",
+  "image": "profil.jpg",
+  "ville": "Antananarivo",
+  "telephone": "0341234567",
+  "genre": 1,
+  "date_naissance": "2000-05-10",
+  "description": "Developpeur Fullstack",
+  "competences": [1, 2],
+  "langues": [1, 3],
+  "diplomes": [2, 4],
+  "experiences": [
+    {
+      "metier_id": 1,
+      "annees_experience": 3
+    },
+    {
+      "metier_id": 2,
+      "annees_experience": 2
+    }
+  ]
+}
+
+

@@ -18,19 +18,14 @@ public class LangueService {
     }
 
     public List<Langue> getAll() {
-        return langueRepository.findAll();
+        List<Langue> langues= langueRepository.findAll();
+        for(Langue langue : langues) {
+            langue.setBesoinLangues(null);
+        }
+        return langues;
     }
 
     public Langue getById(Integer id) {
         return langueRepository.findById(id).orElse(null);
-    }
-
-    public Map<String, Object> getAllMap() {
-        return langueRepository.findAll()
-                .stream()
-                .collect(Collectors.toMap(
-                        l -> String.valueOf(l.getId()),
-                        l -> l.getLibelle()
-                ));
     }
 }

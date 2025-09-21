@@ -22,7 +22,7 @@ public class StatusEmploye {
     @Column(name = "date_entree")
     private LocalDateTime dateEntree;
     
-    @ManyToOne(fetch = FetchType.LAZY)
+    @ManyToOne(fetch = FetchType.EAGER)
     @JoinColumn(name = "employe_id", nullable = false)
     private Employe employe;
 }

@@ -1,4 +1,4 @@
-package com.entreprise.gestion.rh;
+package com.entreprise.gestion;
 
 import org.junit.jupiter.api.Test;
 import org.springframework.boot.test.context.SpringBootTest;

@@ -18,7 +18,7 @@ public class Utilisateur {
     private String login;
     private String mdp;
     
-    @ManyToOne(fetch = FetchType.LAZY)
+    @ManyToOne(fetch = FetchType.EAGER)
     @JoinColumn(name = "departement_id")
     private Departement departement;
 }

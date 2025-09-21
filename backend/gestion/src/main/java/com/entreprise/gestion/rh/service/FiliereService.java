@@ -1,6 +1,7 @@
 package com.entreprise.gestion.rh.service;
 
 import com.entreprise.gestion.rh.model.Filiere;
+import com.entreprise.gestion.rh.model.DiplomeFiliere;
 import com.entreprise.gestion.rh.repository.FiliereRepository;
 import org.springframework.stereotype.Service;
 
@@ -18,19 +19,16 @@ public class FiliereService {
     }
 
     public List<Filiere> getAll() {
-        return filiereRepository.findAll();
+        List<Filiere> filiers =filiereRepository.findAll();
+        for(Filiere filiere : filiers) {
+            filiere.setDiplomeFilieres(null);
+        }
+        return filiers;
     }
 
     public Filiere getById(Integer id) {
         return filiereRepository.findById(id).orElse(null);
     }
 
-    public Map<String, Object> getAllMap() {
-        return filiereRepository.findAll()
-                .stream()
-                .collect(Collectors.toMap(
-                        f -> String.valueOf(f.getId()),
-                        f -> f.getLibelle()
-                ));
-    }
+
 }

@@ -18,19 +18,16 @@ public class CompetenceService {
     }
 
     public List<Competence> getAll() {
-        return competenceRepository.findAll();
+        List<Competence> competences= competenceRepository.findAll();
+        for(Competence c : competences) {
+            c.setCandidats(null);
+            c.setBesoinCompetences(null);
+        }
+        return competences;
     }
 
     public Competence getById(Integer id) {
         return competenceRepository.findById(id).orElse(null);
     }
 
-    public Map<String, Object> getAllMap() {
-        return competenceRepository.findAll()
-                .stream()
-                .collect(Collectors.toMap(
-                        c -> String.valueOf(c.getId()),
-                        c -> c.getLibelle()
-                ));
-    }
 }

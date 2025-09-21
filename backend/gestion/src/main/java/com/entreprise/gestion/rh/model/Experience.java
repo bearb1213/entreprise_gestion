@@ -18,11 +18,11 @@ public class Experience {
     @Column(name = "nb_annee")
     private Integer nbAnnee;
     
-    @ManyToOne(fetch = FetchType.LAZY)
+    @ManyToOne(fetch = FetchType.EAGER)
     @JoinColumn(name = "metier_id")
     private Metier metier;
     
-    @ManyToOne(fetch = FetchType.LAZY)
+    @ManyToOne(fetch = FetchType.EAGER)
     @JoinColumn(name = "candidat_id")
     private Candidat candidat;
 }

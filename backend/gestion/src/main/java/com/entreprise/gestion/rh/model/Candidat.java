@@ -12,6 +12,7 @@ import java.util.List;
 @Setter
 @NoArgsConstructor
 @AllArgsConstructor
+@Builder
 public class Candidat {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -40,8 +41,14 @@ public class Candidat {
     )
     private List<Langue> langues = new ArrayList<>();
     
-    @OneToMany(mappedBy = "candidat", fetch = FetchType.LAZY)
-    private List<CandidatDiplomeFiliere> candidatDiplomeFilieres = new ArrayList<>();
+    @ManyToMany(fetch = FetchType.LAZY)
+    @JoinTable(
+        name = "candidat_diplome_filiere",
+        joinColumns = @JoinColumn(name = "candidat_id"),
+        inverseJoinColumns = @JoinColumn(name = "diplome_filiere_id")
+    )
+    private List<DiplomeFiliere> diplomeFilieres = new ArrayList<>();
+
     
     @OneToMany(mappedBy = "candidat", fetch = FetchType.LAZY)
     private List<Candidature> candidatures = new ArrayList<>();

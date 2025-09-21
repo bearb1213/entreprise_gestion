@@ -20,11 +20,11 @@ public class Question {
     @Column(name = "intitule", length = 255)
     private String intitule;
     
-    @ManyToOne(fetch = FetchType.LAZY)
+    @ManyToOne(fetch = FetchType.EAGER)
     @JoinColumn(name = "departement_id", nullable = false)
     private Departement departement;
     
-    @ManyToOne(fetch = FetchType.LAZY)
+    @ManyToOne(fetch = FetchType.EAGER)
     @JoinColumn(name = "metier_id")
     private Metier metier;
     

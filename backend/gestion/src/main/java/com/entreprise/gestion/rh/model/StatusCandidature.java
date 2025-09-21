@@ -22,7 +22,7 @@ public class StatusCandidature {
     @Column(name = "libelle", length = 50)
     private String libelle;
     
-    @ManyToOne(fetch = FetchType.LAZY)
+    @ManyToOne(fetch = FetchType.EAGER)
     @JoinColumn(name = "candidature_id", nullable = false)
     private Candidature candidature;
 }

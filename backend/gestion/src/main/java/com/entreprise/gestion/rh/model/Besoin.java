@@ -38,11 +38,11 @@ public class Besoin {
     @Column(name = "min_experience")
     private Integer minExperience;
     
-    @ManyToOne(fetch = FetchType.LAZY)
+    @ManyToOne(fetch = FetchType.EAGER)
     @JoinColumn(name = "metier_id")
     private Metier metier;
     
-    @ManyToOne(fetch = FetchType.LAZY)
+    @ManyToOne(fetch = FetchType.EAGER)
     @JoinColumn(name = "departement_id", nullable = false)
     private Departement departement;
     
