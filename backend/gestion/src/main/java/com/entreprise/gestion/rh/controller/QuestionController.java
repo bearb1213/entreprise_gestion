@@ -1,8 +1,8 @@
 package com.entreprise.gestion.rh.controller;
 
-import java.lang.reflect.Array;
+
 import java.util.ArrayList;
-import java.util.Arrays;
+
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -13,14 +13,14 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
-import org.springframework.web.bind.annotation.ResponseBody;
+
 import org.springframework.web.bind.annotation.RestController;
 
 import com.entreprise.gestion.rh.dto.QuestionDto;
 import com.entreprise.gestion.rh.model.Question;
 import com.entreprise.gestion.rh.service.QuestionService;
 
-import jakarta.servlet.http.HttpServletRequest;
+
 
 @RestController
 @RequestMapping("/questions")
@@ -28,6 +28,7 @@ public class QuestionController {
     
     @Autowired
     private QuestionService questionService;
+    
     
     @PostMapping({"/", ""})
     public List<Object> getQuestions(@RequestParam("id_dept") Integer deptId, @RequestParam("id_metier") Integer metierId) {

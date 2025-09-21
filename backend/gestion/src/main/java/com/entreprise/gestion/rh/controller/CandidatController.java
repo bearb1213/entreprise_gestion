@@ -19,6 +19,7 @@ import com.entreprise.gestion.rh.service.NotesService;
 
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 import com.entreprise.gestion.rh.model.Personne;
 import java.util.HashMap;
@@ -45,13 +46,16 @@ public class CandidatController {
     private final MetierRepository metierRepository;
        private final NotesService notesService;
        private final EmailService emailService;
-    
+
+    @PreAuthorize("hasRole('Candidat' or hasRole('Rh') or hasRole('Admin')")
     @PostMapping
     public ResponseEntity<CandidatDTO> createCandidat(@RequestBody CandidatDTO candidatDTO) {
         Candidat candidat = convertToEntity(candidatDTO);
         Candidat savedCandidat = candidatService.saveCandidat(candidat);
         return ResponseEntity.ok(convertToDTO(savedCandidat));
     }
+  
+    @PreAuthorize("hasRole('Candidat'")
     @PostMapping("/postuler/{besoinId}")
 public ResponseEntity<EvaluationResultDTO> postuler(
         @PathVariable Integer besoinId,
@@ -88,6 +92,8 @@ public ResponseEntity<EvaluationResultDTO> postuler(
     return ResponseEntity.ok(result);
 }
 
+@PreAuthorize("hasRole('Candidat' or hasRole('Rh') or hasRole('Admin')")
+
     @PostMapping("/evaluate")
     public ResponseEntity<EvaluationResultDTO> evaluateCandidat(@RequestBody CandidatDTO candidatDTO) {
         Candidat candidat = convertToEntity(candidatDTO);
@@ -108,6 +114,7 @@ public ResponseEntity<EvaluationResultDTO> postuler(
         return ResponseEntity.ok(result);
     }
     
+    @PreAuthorize("hasRole('isAuthenticated'")
     @GetMapping("/besoins")
     public ResponseEntity<List<Besoin>> getActiveBesoins() {
         List<Besoin> besoins = candidatService.getActiveBesoins();
