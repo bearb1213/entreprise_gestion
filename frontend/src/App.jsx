@@ -2,6 +2,7 @@ import { useState } from 'react'
 import './assets/App.css'
 import SideBar from './component/SideBar.jsx'
 import CvForm from './component/CvForm.jsx'
+import { BrowserRouter, Routes, Route } from "react-router-dom";
 
 function App() {
   const [currentView, setCurrentView] = useState('dashboard');
