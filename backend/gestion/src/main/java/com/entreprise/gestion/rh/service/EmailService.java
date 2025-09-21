@@ -10,7 +10,6 @@ import jakarta.mail.MessagingException;
 import jakarta.mail.internet.MimeMessage;
 import java.io.File;
 
-
 @Service
 public class EmailService {
 
