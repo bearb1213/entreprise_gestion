@@ -1,4 +1,5 @@
-import React, { useEffect, useState } from "react";
+import React from "react";
+import { Link, useLocation } from "react-router-dom";
 
 // Icônes SVG intégrées
 const DashboardIcon = () => (
@@ -19,17 +20,12 @@ const LogoutIcon = () => (
   </svg>
 );
 
-export default function SideBar({ active = "dashboard", onNavigate }) {
-  const [activeItem, setActiveItem] = useState(active);
-  const [menuItems] = useState([
-    { id: 1, name: "Dashboard", view: "dashboard", icon: DashboardIcon },
-    { id: 2, name: "Candidature", view: "candidature", icon: CandidatureIcon },
+export default function SideBar() {
+  const location = useLocation();
+  const [menuItems] = React.useState([
+    { id: 1, name: "Dashboard", path: "/dashboard", icon: DashboardIcon },
+    { id: 2, name: "Candidature", path: "/candidature", icon: CandidatureIcon },
   ]);
-
-  const handleNavigation = (view) => {
-    setActiveItem(view);
-    onNavigate(view);
-  };
 
   const handleLogout = () => {
     console.log("User logged out");
@@ -48,20 +44,24 @@ export default function SideBar({ active = "dashboard", onNavigate }) {
         <ul className="px-3">
           {menuItems.map((item) => {
             const IconComponent = item.icon;
+            const isActive = location.pathname === item.path;
+            
             return (
               <li
                 key={item.id}
                 className={`mb-2 rounded-lg transition-all duration-200 ${
-                  activeItem === item.view
+                  isActive
                     ? "bg-blue-600 text-white shadow-md"
                     : "text-gray-300 hover:bg-gray-700 hover:text-white"
                 }`}
-                onClick={() => handleNavigation(item.view)}
               >
-                <div className="flex items-center p-3 cursor-pointer">
+                <Link
+                  to={item.path}
+                  className="flex items-center p-3 cursor-pointer"
+                >
                   <IconComponent />
                   <span className="ml-3">{item.name}</span>
-                </div>
+                </Link>
               </li>
             );
           })}

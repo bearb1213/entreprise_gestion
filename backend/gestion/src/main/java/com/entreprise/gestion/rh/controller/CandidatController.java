@@ -82,7 +82,7 @@ public ResponseEntity<EvaluationResultDTO> postuler(
     Evaluation evaluation = candidatService.getEvaluationById(1);
     notesService.saveNote((double)score, evaluation, candidature);
     try {
-       emailService.sendConfirmationEmail(candidat.getPersonne().getEmail(),candidat.getPersonne().getPrenom());
+       emailService.sendConfirmationEmail(candidat.getPersonne().getEmail(),candidat.getPersonne().getPrenom(),candidature.getId());
        
     } catch (Exception e) {
        // TODO: handle exception

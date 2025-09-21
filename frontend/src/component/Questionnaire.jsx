@@ -1,7 +1,8 @@
 import React, { useEffect, useState } from "react";
+import { useParams } from "react-router-dom";
 
 // ici je dois recuperer un pathVariable contenu dans le lien menant a cette page
-const candidatureId = 1;
+
 
 async function fetchQuestions() {
     try {
@@ -30,7 +31,7 @@ async function fetchQuestions() {
     }
 }
 
-async function submitAnswers(answers) {
+async function submitAnswers(answers,candidatureId) {
     try {
         const response = await fetch(`http://localhost:8080/questions/submit/${candidatureId}`, {
             method: 'POST',
@@ -120,10 +121,13 @@ const Question = ({ content, index, onAnswer }) => {
 }
 
 function Questionnaire() {
+    const { candidatureId } = useParams();
     const [questions, setQuestions] = useState([]);
     const [isLoading, setIsLoading] = useState(true);
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [submitStatus, setSubmitStatus] = useState(null);
+
+    console.log("ID Candidature récupéré:", candidatureId); // Pour debug
 
     useEffect(() => {
         const getQuestions = async () => {
@@ -187,7 +191,7 @@ function Questionnaire() {
             }));
             
             console.log("Réponses à envoyer:", answers);
-            await submitAnswers(answers);
+            await submitAnswers(answers, candidatureId);
             setSubmitStatus('success');
         } catch (error) {
             console.error("Erreur lors de la soumission:", error);
