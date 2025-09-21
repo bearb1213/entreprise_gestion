@@ -179,4 +179,19 @@ public class CandidatService {
             throw new MyException("Erreur lors de la sauvegarde du fichier : " + file.getOriginalFilename(), e);
         }
     }
+
+    public List<Candidat> listerCandidats() {
+        return candidatRepository.findAll();
+    }
+
+    public Candidat getCandidatById(Integer id) throws MyException {
+        return candidatRepository.findById(id)
+                .orElseThrow(() -> new MyException("Candidat introuvable avec id=" + id));
+    }   
+
+    public Candidat findByEmail(String email) throws MyException {
+        return candidatRepository.findByEmail(email)
+                .orElseThrow(() -> new MyException("Candidat introuvable avec email=" + email));
+    }
+    
 }

@@ -1,7 +1,7 @@
 package com.entreprise.gestion.rh.controller;
 
-import com.entreprise.gestion.rh.model.Utilisateur;
 import com.entreprise.gestion.rh.service.UtilisateurService;
+import com.entreprise.gestion.rh.service.PersonneService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
@@ -10,83 +10,128 @@ import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.Map;
+import java.util.HashMap;
 import jakarta.servlet.http.HttpSession;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.context.SecurityContext;
 import org.springframework.security.core.AuthenticationException;
 import org.springframework.http.HttpStatus;
-import org.springframework.web.server.ResponseStatusException;
-import java.util.HashMap;
 import org.springframework.http.ResponseEntity;
 import com.entreprise.gestion.exception.MyException;
+import java.util.List;
+import org.springframework.security.core.userdetails.UserDetails;
+import com.entreprise.gestion.rh.service.CustomUserDetailsService;
+import org.springframework.security.web.context.HttpSessionSecurityContextRepository;
+import org.springframework.security.authentication.BadCredentialsException;
 
 
 @RestController
-@RequestMapping("/api/public/utilisateur")
+@RequestMapping("/api/utilisateur")
 @RequiredArgsConstructor
 public class UtilisateurController {
 
     private final UtilisateurService utilisateurService;
+    private final PersonneService personneService;
     private final AuthenticationManager authenticationManager;
-
+    private final CustomUserDetailsService userDetailsService;
 
     @PostMapping("/login")
-    public Map<String, Object> login(@RequestBody Utilisateur credentials, HttpSession session) throws Exception {
+    public Map<String, Object> login(@RequestBody Map<String, String> credentials, HttpSession session) throws Exception {
         try {
-            Authentication authentication = authenticationManager.authenticate(
-                new UsernamePasswordAuthenticationToken(credentials.getLogin(), credentials.getMdp())
+            Map<String, Object> authInfo;
+            Authentication authentication;
+
+            // 🔹 Cas 1 : login + mdp
+            if (credentials.containsKey("login")) {
+                String login = credentials.get("login");
+                String mdp = credentials.get("mdp");
+
+                if (login == null || login.isBlank() || mdp == null || mdp.isBlank()) {
+                    throw new MyException("Login et mot de passe obligatoires");
+                }
+
+                authentication = authenticationManager.authenticate(
+                        new UsernamePasswordAuthenticationToken(login, mdp)
+                );
+
+                SecurityContextHolder.getContext().setAuthentication(authentication);
+
+                authInfo = utilisateurService.getUtilisateurInfo(login);
+            } 
+            // 🔹 Cas 2 : email seul
+            else if (credentials.containsKey("email")) {
+                String email = credentials.get("email");
+                if (email == null || email.isBlank()) {
+                    throw new MyException("Email obligatoire");
+                }
+
+                // Clear contexte
+                SecurityContextHolder.clearContext();
+
+                // Charger le UserDetails pour email
+                UserDetails userDetails = userDetailsService.loadUserByEmail(email);
+
+                // Créer un token et mettre le principal en email
+                authentication = new UsernamePasswordAuthenticationToken(
+                        userDetails,  // 🔹 username = email
+                        null,                       // mot de passe vide
+                        userDetails.getAuthorities()
+                );
+
+                SecurityContextHolder.getContext().setAuthentication(authentication);
+                authInfo = new HashMap<>();
+                authInfo.put("email", email);
+
+            } else {
+                throw new MyException("Données de connexion invalides");
+            }
+
+            // Sauvegarder dans session
+            session.setAttribute(
+                    HttpSessionSecurityContextRepository.SPRING_SECURITY_CONTEXT_KEY,
+                    SecurityContextHolder.getContext()
             );
-            SecurityContext context = SecurityContextHolder.createEmptyContext();
-            context.setAuthentication(authentication);
-            SecurityContextHolder.setContext(context);
+            session.setAttribute("auth", authInfo);
 
-            // Sauvegarder le SecurityContext dans la session
-            session.setAttribute("SPRING_SECURITY_CONTEXT", context);
-
-            Map<String, Object> utilisateurInfo = utilisateurService.getUtilisateurInfo(credentials.getLogin());
-            session.setAttribute("auth", utilisateurInfo);
-            return utilisateurInfo;
+            return authInfo;
 
         } catch (AuthenticationException e) {
-            throw new MyException("Identifiants incorrects",e);
+            throw new MyException("Identifiants incorrects", e);
         }
     }
 
-    /**
-     * ✨ me
-     * Description :
-     *   Récupère les informations de l’utilisateur actuellement connecté.
-     *   Accessible uniquement aux utilisateurs authentifiés.
-     *
-     * Input :
-     *   - Authentication authentication : objet fourni par Spring contenant les détails de l’utilisateur connecté.
-     *
-     * Retour :
-     *   - Map<String, Object> : contient le login et les rôles de l’utilisateur connecté.
-     */
+
     @PreAuthorize("isAuthenticated()")
     @GetMapping("/me")
     public Map<String, Object> me(Authentication authentication) {
+        System.out.println("Principal: " + authentication.getPrincipal());
+        System.out.println("Principal class: " + authentication.getPrincipal().getClass());
+        System.out.println("Name: " + authentication.getName());
+        System.out.println("Authorities: " + authentication.getAuthorities());
+
+        Object principal = authentication.getPrincipal();
+        String login;
+        String userType = "unknown";
+
+        if (principal instanceof UserDetails userDetails) {
+            login = userDetails.getUsername();
+            userType = "UserDetails";
+        } else if (principal instanceof String) {
+            login = (String) principal;
+            userType = "String";
+        } else {
+            login = authentication.getName();
+            userType = "Authentication name";
+        }
+
         return Map.of(
-                "login", authentication.getName(),
-                "roles", authentication.getAuthorities()
+                "login", login,
+                "roles", authentication.getAuthorities(),
+                "userType", userType,
+                "principalClass", principal.getClass().getSimpleName()
         );
     }
 
-    /**
-     * ✨ logout
-     * Description :
-     *   Déconnecte l’utilisateur en invalidant la session et en nettoyant le SecurityContext.
-     *   Accessible uniquement aux utilisateurs authentifiés.
-     *
-     * Input :
-     *   - HttpSession session : session HTTP à invalider.
-     *
-     * Retour :
-     *   - ResponseEntity<Map<String, String>> :
-     *       - 200 OK avec message "Déconnexion réussie" si succès
-     *       - 500 INTERNAL_SERVER_ERROR avec message d’erreur si problème lors de la déconnexion
-     */
     @PreAuthorize("isAuthenticated()")
     @PostMapping("/logout")
     public ResponseEntity<Map<String, String>> logout(HttpSession session) {
@@ -96,7 +141,7 @@ public class UtilisateurController {
             return ResponseEntity.ok(Map.of("message", "Déconnexion réussie"));
         } catch (Exception e) {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
-                .body(Map.of("error", "Erreur lors de la déconnexion"));
+                    .body(Map.of("error", "Erreur lors de la déconnexion"));
         }
     }
 }

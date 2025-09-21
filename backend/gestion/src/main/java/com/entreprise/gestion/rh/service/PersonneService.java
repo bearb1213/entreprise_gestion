@@ -8,6 +8,8 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 import java.util.Optional;
+import java.util.Map;
+import java.util.HashMap;
 
 @Service
 @Transactional
@@ -160,4 +162,28 @@ public class PersonneService {
     public List<Personne> findByVille(String ville) {
         return personneRepository.findByVille(ville);
     }
+
+        /**
+     * Récupère les infos principales d’une personne sous forme de Map
+     * @param email email de la personne
+     * @return Map<String, Object> contenant les infos essentielles
+     */
+    public Map<String, Object> getPersonneInfo(String email) {
+        Personne personne = personneRepository.findByEmail(email)
+                .orElseThrow(() -> new RuntimeException("Personne non trouvée avec l'email: " + email));
+
+        Map<String, Object> info = new HashMap<>();
+        info.put("id", personne.getId());
+        info.put("nom", personne.getNom());
+        info.put("prenom", personne.getPrenom());
+        info.put("email", personne.getEmail());
+        info.put("dateNaissance", personne.getDateNaissance());
+        info.put("genre", personne.getGenre());
+        info.put("ville", personne.getVille());
+        info.put("telephone", personne.getTelephone());
+        info.put("image", personne.getImage());
+
+        return info;
+    }
+
 }

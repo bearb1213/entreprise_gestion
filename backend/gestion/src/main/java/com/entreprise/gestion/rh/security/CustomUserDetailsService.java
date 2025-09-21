@@ -1,7 +1,9 @@
 package com.entreprise.gestion.rh.service;
 
 import com.entreprise.gestion.rh.model.Utilisateur;
+import com.entreprise.gestion.rh.model.Personne;
 import com.entreprise.gestion.rh.repository.UtilisateurRepository;
+import com.entreprise.gestion.rh.repository.PersonneRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
@@ -12,6 +14,7 @@ import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.stereotype.Service;
 
 import java.util.ArrayList;
+import java.util.List;
 import java.util.Collection;
 
 @Service
@@ -21,31 +24,39 @@ public class CustomUserDetailsService implements UserDetailsService {
     private final UtilisateurRepository utilisateurRepository;
 
     /**
-     * Charge un utilisateur par son login pour Spring Security.
-     * Input : login - String correspondant au nom d'utilisateur
-     * Output : UserDetails - objet UserDetails utilisé par Spring Security
-     * @throws UsernameNotFoundException si l'utilisateur n'existe pas
+     * Méthode standard utilisée par Spring Security.
+     * Authentifie un Utilisateur via login + mot de passe.
      */
     @Override
     public UserDetails loadUserByUsername(String login) throws UsernameNotFoundException {
-        
-        // Récupérer l'utilisateur depuis la base
+
         Utilisateur utilisateur = utilisateurRepository.findByLogin(login)
                 .orElseThrow(() -> new UsernameNotFoundException("Utilisateur non trouvé"));
 
-        // Déterminer les rôles de l'utilisateur
         Collection<GrantedAuthority> authorities = new ArrayList<>();
-
-        if (utilisateur!= null && utilisateur.getDepartement() != null) {
-            String role = utilisateur.getDepartement().getLibelle().toUpperCase(); // ex: ADMIN, FINANCE, AGENT
+        if (utilisateur.getDepartement() != null && utilisateur.getDepartement().getLibelle() == "Admin" || utilisateur.getDepartement().getLibelle() == "Rh") {
+            String role = utilisateur.getDepartement().getLibelle().toUpperCase();
             authorities.add(new SimpleGrantedAuthority("ROLE_" + role));
-        } 
+        } else {
+            authorities.add(new SimpleGrantedAuthority("ROLE_DEPARTEMENT"));
+        }
 
-        // Retourner un UserDetails compatible Spring Security
         return User.builder()
                 .username(utilisateur.getLogin())
-                .password(utilisateur.getMdp()) // mot de passe en clair ou encodé selon ta configuration
+                .password(utilisateur.getMdp())
                 .authorities(authorities)
+                .build();
+    }
+
+    /**
+     * 🔹 Nouvelle méthode : authentification via Personne (email uniquement)
+     */
+    public UserDetails loadUserByEmail(String email) throws UsernameNotFoundException {
+        // Ici pas de mot de passe, donc on renvoie un user avec "" comme password
+        return User.builder()
+                .username(email)
+                .password("") // mot de passe vide
+                .authorities(List.of(new SimpleGrantedAuthority("ROLE_CANDIDAT")))
                 .build();
     }
 }

@@ -27,4 +27,7 @@ public class DiplomeFiliere {
     
     @OneToMany(mappedBy = "diplomeFiliere" , fetch = FetchType.LAZY)
     private List<BesoinDiplomeFiliere> besoinDiplomeFilieres;
+
+    @ManyToMany(mappedBy = "diplomeFilieres") // doit correspondre au nom de la liste dans Candidat
+    private List<Candidat> candidats;
 }
