@@ -1,5 +1,6 @@
 package com.entreprise.gestion.rh.controller;
 
+import com.entreprise.gestion.rh.dto.BesoinCriteria;
 import com.entreprise.gestion.rh.dto.BesoinDTO;
 import com.entreprise.gestion.rh.dto.BesoinRequest;
 import com.entreprise.gestion.rh.model.Besoin;
@@ -12,6 +13,7 @@ import com.entreprise.gestion.rh.service.MetierService;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.*;
 import java.util.List;
@@ -42,50 +44,56 @@ public class BesoinController {
         this.diplomeFiliereService = diplomeFiliereService;
     }
 
-    @GetMapping
-    public List<Besoin> listBesoins() {
-        return besoinService.findAll();
-    }
+    // @GetMapping
+    // public List<Besoin> listBesoins() {
+    //     return besoinService.findAll();
+    // }
 
-    @GetMapping("/{id}")
-    public Optional<Besoin> getBesoin(@PathVariable Integer id) {
-        return besoinService.findById(id);
-    }
+    // @GetMapping("/{id}")
+    // public Optional<Besoin> getBesoin(@PathVariable Integer id) {
+    //     return besoinService.findById(id);
+    // }
 
-    @GetMapping("/metiers")
-    public Object getMetiers() {
-        return metierService.getAll();
-    }
+    // @GetMapping("/metiers")
+    // public Object getMetiers() {
+    //     return metierService.getAll();
+    // }
 
-    @GetMapping("/departements")
-    public Object getDepartements() {
-        return departementService.getAllDepartements();
-    }
+    // @GetMapping("/departements")
+    // public Object getDepartements() {
+    //     return departementService.getAllDepartements();
+    // }
 
-    @GetMapping("/competences")
-    public Object getCompetences() {
-        return competenceService.getAll();
-    }
+    // @GetMapping("/competences")
+    // public Object getCompetences() {
+    //     return competenceService.getAll();
+    // }
 
-    @GetMapping("/langues")
-    public Object getLangues() {
-        return langueService.getAll();
-    }
+    // @GetMapping("/langues")
+    // public Object getLangues() {
+    //     return langueService.getAll();
+    // }
 
-    @GetMapping("/diplomes-filieres")
-    public Object getDiplomeFilieres() {
-        return diplomeFiliereService.findAll();
-    }
+    // @GetMapping("/diplomes-filieres")
+    // public Object getDiplomeFilieres() {
+    //     return diplomeFiliereService.findAll();
+    // }
 
-    @GetMapping("/besoins")
-    public ResponseEntity<List<BesoinDTO>> getAllBesoins() {
-        return ResponseEntity.ok(besoinService.getAllBesoins());
-    }
+    // @GetMapping("/besoins")
+    // public ResponseEntity<List<BesoinDTO>> getAllBesoins() {
+    //     return ResponseEntity.ok(besoinService.getAllBesoins());
+    // }
 
+    @PreAuthorize("hasRole'Departement'")
     @PostMapping
-    public ResponseEntity<Besoin> createBesoin(@RequestBody BesoinRequest request) {
+    public ResponseEntity<Besoin> createBesoin(@RequestBody BesoinRequest request) {   // admin
         Besoin besoin = besoinService.createBesoin(request);
         return ResponseEntity.ok(besoin);
     }
 
+    @PreAuthorize("hasRole'isAuthenticated'")
+    @PostMapping("/filtre")
+    public List<Besoin> searchBesoins(@RequestBody BesoinCriteria criteria) { // acces tout le monde 
+        return besoinService.filterBesoins(criteria);
+    }
 }
