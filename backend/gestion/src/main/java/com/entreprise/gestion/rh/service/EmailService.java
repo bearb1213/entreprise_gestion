@@ -1,6 +1,7 @@
 package com.entreprise.gestion.rh.service;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.core.io.ByteArrayResource;
 import org.springframework.mail.SimpleMailMessage;
 import org.springframework.mail.javamail.JavaMailSender;
 import org.springframework.mail.javamail.MimeMessageHelper;
@@ -61,34 +62,17 @@ public class EmailService {
         mailSender.send(message);
     }
 
-    // Méthode utilitaire pour créer des emails HTML simples
-    public void sendWelcomeEmail(String to, String username) throws MessagingException {
-        String htmlContent = """
-            <!DOCTYPE html>
-            <html>
-            <head>
-                <meta charset="UTF-8">
-                <style>
-                    body { font-family: Arial, sans-serif; line-height: 1.6; }
-                    .container { max-width: 600px; margin: 0 auto; padding: 20px; }
-                    .header { background: #007bff; color: white; padding: 20px; text-align: center; }
-                </style>
-            </head>
-            <body>
-                <div class="container">
-                    <div class="header">
-                        <h1>Bienvenue !</h1>
-                    </div>
-                    <div>
-                        <h2>Bonjour, %s !</h2>
-                        <p>Bienvenue dans notre système de gestion RH.</p>
-                        <p>Votre compte a été créé avec succès.</p>
-                    </div>
-                </div>
-            </body>
-            </html>
-            """.formatted(username);
+    public void sendHtmlEmailWithAttachment(String to, String subject, String htmlContent,String fileName,byte[] attachmentData,String contentType) throws MessagingException {
+        MimeMessage message = mailSender.createMimeMessage();
+        MimeMessageHelper helper = new MimeMessageHelper(message, true, "UTF-8");
         
-        sendHtmlEmail(to, "Bienvenue - Système RH", htmlContent);
+        helper.setTo(to);
+        helper.setSubject(subject);
+        helper.setText(htmlContent, true);
+        helper.setFrom("noreply@entreprise.com");
+        helper.addAttachment(fileName, new ByteArrayResource(attachmentData),contentType);
+        
+        mailSender.send(message);
     }
+
 }
