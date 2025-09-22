@@ -1,5 +1,6 @@
 package com.entreprise.gestion.rh.service;
 
+import com.entreprise.gestion.exception.MyException;
 import com.entreprise.gestion.rh.dto.CandidatureSimpleDTO;
 import com.entreprise.gestion.rh.model.Candidature;
 import com.entreprise.gestion.rh.repository.CandidatureRepository;

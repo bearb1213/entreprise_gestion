@@ -7,7 +7,7 @@ import { useParams } from "react-router-dom";
 async function fetchQuestions(idCandidature) {
     try {
 
-        const formDataRaw = await fetch(`http://localhost:8080/candidature/infos/${idCandidature}`);
+        const formDataRaw = await fetch(`http://localhost:8080/api/candidatures/infos/${idCandidature}`);
         console.log("FORM-DATA");
         console.log(formDataRaw);
         const formData = await formDataRaw.json();

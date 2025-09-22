@@ -1,12 +1,15 @@
 package com.entreprise.gestion.rh.controller;
 
 import com.entreprise.gestion.rh.dto.CandidatureSimpleDTO;
+import com.entreprise.gestion.rh.model.Candidature;
 import com.entreprise.gestion.rh.service.CandidatureService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 @RestController
 @RequestMapping("/api/candidatures")
