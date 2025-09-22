@@ -34,6 +34,12 @@ public class CompanyInfos {
     @Value("${quizz.generalquestions}")
     private Integer generalQuestions;
 
+    @Value("${quizz.requirement}")
+    private Float quizzRequirement;
+
+    @Value("${entretien.delay}")
+    private Integer entretienDelay;
+
     public String getName() {
         return name;
     }
@@ -70,8 +76,18 @@ public class CompanyInfos {
         return generalQuestions;
     }
 
+    public Float getQuizzRequirement() {
+        return quizzRequirement;
+    }
+
+    public Integer getEntretienDelay() {
+        return entretienDelay;
+    }
 
     
+
+
+
 
     
     
