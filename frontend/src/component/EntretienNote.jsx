@@ -97,7 +97,7 @@ const EntretienNote = () => {
                         <option value="">-- Sélectionner une candidature --</option>
                         {candidatures.map((candidature) => (
                             <option key={candidature.id} value={candidature.id}>
-                                {`${candidature.candidatNom} - ${candidature.besoinTitre}`}
+                                {`${candidature.candidatNom}`}
                             </option>
                         ))}
                     </select>

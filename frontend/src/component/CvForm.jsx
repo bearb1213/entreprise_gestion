@@ -481,13 +481,13 @@ const CvForm = () => {
                 <div className="w-full bg-gray-200 rounded-full h-2.5">
                   <div
                     className="bg-blue-600 h-2.5 rounded-full transition-all duration-500"
-                    style={{ width: `${Math.min(score, 100)}%` }}
+                    style={{ width: `${Math.min(score, 20)}%` }}
                   ></div>
                 </div>
                 <div className="text-sm text-gray-600 mt-1">
-                  {score >= 80 ? 'Excellent match!' : 
-                   score >= 60 ? 'Bon profil' : 
-                   score >= 40 ? 'Profil acceptable' : 
+                  {score >= 15 ? 'Excellent match!' : 
+                   score >= 10 ? 'Bon profil' : 
+                   score >= 5 ? 'Profil acceptable' : 
                    'Profil non conforme'}
                 </div>
               </div>

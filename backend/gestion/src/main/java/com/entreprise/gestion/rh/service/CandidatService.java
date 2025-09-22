@@ -33,8 +33,9 @@ public class CandidatService {
         return candidatRepository.save(candidat);
     }
     
-    public int calculateScore(Candidat candidat, Besoin besoin) {
+    public double calculateScore(Candidat candidat, Besoin besoin) {
         int score = 0;
+        int coefficient=0;
     
         LocalDate now = LocalDate.now();
     
@@ -46,6 +47,7 @@ public class CandidatService {
             
             int ageNote = (age >= besoin.getMinAge() && age <= besoin.getMaxAge()) ? 20 : 0;
             score += ageNote * besoin.getCoeffAge();
+            coefficient+=besoin.getCoeffAge();
         }
     
         // 2. EXPÉRIENCE
@@ -57,6 +59,7 @@ public class CandidatService {
             // formule : (exp / minExp) * 20, plafonné à 20
             int expNote = (int) Math.min((totalExp * 20.0) / besoin.getMinExperience(), 20);
             score += expNote * besoin.getCoeffExperience();
+            coefficient+=besoin.getCoeffExperience();
         }
     
         // 3. COMPÉTENCES
@@ -73,6 +76,7 @@ public class CandidatService {
     
                 int skillNote = hasSkill ? 20 : 0;
                 score += skillNote * bc.getCoeff();
+                coefficient+=bc.getCoeff();
             }
         }
     
@@ -84,6 +88,7 @@ public class CandidatService {
     
                 int langNote = hasLang ? 20 : 0;
                 score += langNote * bl.getCoeff();
+                coefficient+=bl.getCoeff();
             }
         }
     
@@ -95,10 +100,11 @@ public class CandidatService {
     
                 int diplomeNote = hasDiplome ? 20 : 0;
                 score += diplomeNote * bdf.getCoeff();
+                coefficient+=bdf.getCoeff();
             }
         }
     
-        return score;
+        return score/coefficient;
     }
     
     public List<Besoin> getActiveBesoins() {

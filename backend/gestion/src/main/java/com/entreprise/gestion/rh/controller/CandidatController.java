@@ -56,6 +56,9 @@ public class CandidatController {
         Candidat savedCandidat = candidatService.saveCandidat(candidat);
         return ResponseEntity.ok(convertToDTO(savedCandidat));
     }
+
+
+
   
     @PreAuthorize("hasRole('Candidat'")
     @PostMapping("/postuler/{besoinId}")
@@ -69,20 +72,19 @@ public ResponseEntity<EvaluationResultDTO> postuler(
     Besoin besoin = candidatService.getBesoinById(besoinId);
     Candidature candidature = candidatService.createCandidature(besoin, candidat);
 
-    // 3️⃣ Calculer la note
-    int score = candidatService.calculateScore(candidat, besoin);
     
-    // 🔥 CRÉER UN EvaluationResultDTO COMME /evaluate
+    double score = candidatService.calculateScore(candidat, besoin);
+    
+   
     EvaluationResultDTO result = new EvaluationResultDTO();
     result.setCandidat(candidatDTO);
     
-    Map<String, Integer> scores = new HashMap<>();
+    Map<String, Double> scores = new HashMap<>();
     scores.put(besoin.getMetier().getLibelle() + " - " + besoin.getDepartement().getLibelle(), score);
     result.setScores(scores);
 
-    // 4️⃣ Sauvegarder la note
+   
     Evaluation evaluation = candidatService.getEvaluationById(1);
-    // notesService.saveNote((double)score, evaluation, candidature);
 
     NoteCreationDTO noteDTO = new NoteCreationDTO();
         noteDTO.setNote((double)score);
@@ -97,7 +99,7 @@ public ResponseEntity<EvaluationResultDTO> postuler(
        // TODO: handle exception
     }
 
-    // 🔥 RETOURNER EvaluationResultDTO AU LIEU DE Map
+    
     return ResponseEntity.ok(result);
 }
 
@@ -111,10 +113,10 @@ public ResponseEntity<EvaluationResultDTO> postuler(
         result.setCandidat(candidatDTO);
         
         List<Besoin> besoins = candidatService.getActiveBesoins();
-        Map<String, Integer> scores = new HashMap<>();
+        Map<String, Double> scores = new HashMap<>();
         
         for (Besoin besoin : besoins) {
-            int score = candidatService.calculateScore(candidat, besoin);
+            double score = candidatService.calculateScore(candidat, besoin);
             scores.put(besoin.getMetier().getLibelle() + " - " + besoin.getDepartement().getLibelle(), score);
         }
         
