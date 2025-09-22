@@ -2,6 +2,7 @@ package com.entreprise.gestion.rh.controller;
 
 import com.entreprise.gestion.rh.dto.CandidatDTO;
 import com.entreprise.gestion.rh.dto.EvaluationResultDTO;
+import com.entreprise.gestion.rh.dto.NoteCreationDTO;
 import com.entreprise.gestion.rh.model.Besoin;
 import com.entreprise.gestion.rh.model.Candidat;
 import com.entreprise.gestion.rh.model.CandidatCompetence;
@@ -14,6 +15,7 @@ import com.entreprise.gestion.rh.model.Evaluation;
 import com.entreprise.gestion.rh.model.Experience;
 import com.entreprise.gestion.rh.model.Langue;
 import com.entreprise.gestion.rh.model.Metier;
+import com.entreprise.gestion.rh.model.Notes;
 import com.entreprise.gestion.rh.service.CandidatService;
 import com.entreprise.gestion.rh.service.NotesService;
 
@@ -80,7 +82,14 @@ public ResponseEntity<EvaluationResultDTO> postuler(
 
     // 4️⃣ Sauvegarder la note
     Evaluation evaluation = candidatService.getEvaluationById(1);
-    notesService.saveNote((double)score, evaluation, candidature);
+    // notesService.saveNote((double)score, evaluation, candidature);
+
+    NoteCreationDTO noteDTO = new NoteCreationDTO();
+        noteDTO.setNote((double)score);
+        noteDTO.setCandidatureId(candidature.getId());
+        noteDTO.setEvaluationId(evaluation.getId());
+        
+        Notes note = notesService.saveNote(noteDTO);
     try {
        emailService.sendConfirmationEmail(candidat.getPersonne().getEmail(),candidat.getPersonne().getPrenom(),candidature.getId());
        

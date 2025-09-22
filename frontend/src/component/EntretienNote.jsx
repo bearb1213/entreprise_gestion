@@ -43,17 +43,26 @@ const EntretienNote = () => {
     const handleSubmit = async (e) => {
         e.preventDefault();
         try {
-            await axios.post(`${API_BASE_URL}/notes`, formData);
+            const noteData = {
+                note: parseFloat(formData.note),
+                candidatureId: parseInt(formData.candidatureId),
+                evaluationId: parseInt(formData.evaluationId)
+            };
+
+            await axios.post(`${API_BASE_URL}/notes`, noteData);
             alert("Note ajoutée avec succès !");
             setFormData({ candidatureId: "", evaluationId: "", note: "" });
         } catch (error) {
             console.error("Error submitting note:", error);
-            alert("Erreur lors de l'ajout de la note: " + (error.response?.data?.message || error.message));
+            const errorMessage = error.response?.data || "Erreur lors de l'ajout de la note";
+            alert(errorMessage);
         }
     };
 
     if (loading) {
-        return <div>Chargement...</div>;
+        return <div className="flex justify-center items-center h-64">
+            <div className="text-lg">Chargement...</div>
+        </div>;
     }
 
     return (
@@ -75,7 +84,7 @@ const EntretienNote = () => {
                         <option value="">-- Sélectionner une candidature --</option>
                         {candidatures.map((candidature) => (
                             <option key={candidature.id} value={candidature.id}>
-                                {`Candidature ${candidature.id}`}
+                                {`${candidature.candidatNom} - ${candidature.besoinTitre}`}
                             </option>
                         ))}
                     </select>
@@ -95,14 +104,14 @@ const EntretienNote = () => {
                         <option value="">-- Sélectionner une évaluation --</option>
                         {evaluations.map((evaluation) => (
                             <option key={evaluation.id} value={evaluation.id}>
-                                {evaluation.libelle}
+                                {evaluation.libelle} (Coeff: {evaluation.coeff})
                             </option>
                         ))}
                     </select>
                 </div>
                 <div className="mb-6">
                     <label htmlFor="note" className="block text-gray-700 text-sm font-bold mb-2">
-                        Note:
+                        Note (0-20):
                     </label>
                     <input
                         type="number"
@@ -112,15 +121,16 @@ const EntretienNote = () => {
                         onChange={handleChange}
                         step="0.01"
                         min="0"
+                        max="20"
                         className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
                         required
                     />
                 </div>
                 <button
                     type="submit"
-                    className="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline"
+                    className="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline transition duration-300"
                 >
-                    Ajouter
+                    Ajouter la note
                 </button>
             </form>
         </div>
