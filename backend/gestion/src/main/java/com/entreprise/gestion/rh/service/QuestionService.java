@@ -9,6 +9,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import com.entreprise.gestion.config.CompanyInfos;
 import com.entreprise.gestion.exception.MyException;
 import com.entreprise.gestion.rh.dto.ChoixDto;
 import com.entreprise.gestion.rh.dto.QuestionDto;
@@ -53,6 +54,9 @@ public class QuestionService {
 
     @Autowired 
     private ReponseCandidatService reponseCandidatService;
+
+    @Autowired 
+    private CompanyInfos companyInfos;
 
     public Question findQuestionById(Integer id)
     {
@@ -201,18 +205,17 @@ public Float evaluateQuestionnaire(Integer idCandidature,List<Float> notes) thro
 
     System.out.println("Calcul de notes ok pour evaluation questionnaire:"+moyenne);
     Notes note = new Notes();
-    note.setCandidature(candidature); // Utiliser l'objet déjà récupéré
-    note.setEvaluation(evaluationRepository.findById(1).orElseThrow(()-> new MyException("ID d'evaluation inexistant")));
-    System.out.println("Evaluation trouvee"); // le probleme reside ici vu qu'il n'y a encore rien dans la table Evaluation 
-    // pb: le code s'arrete directement ici sans lever une seule exception
+    note.setCandidature(candidature); 
+    //ici,le 2 fait reference a l'evaluation "Quizz"(sensee passer en 2eme place) dans la table evaluation
+    note.setEvaluation(evaluationRepository.findById(2).orElseThrow(()-> new MyException("ID d'evaluation inexistant")));
     note.setNote((double) moyenne);
     
     LocalDateTime dateActuelle = LocalDateTime.now();
     note.setDateEntree(dateActuelle);
     notesRepository.save(note);
 
-    Integer nbJoursDecalage = 1 ;
-    Float noteMinimale = 0.8f ; //sense provenir d'un fichier de conf
+    Integer nbJoursDecalage = companyInfos.getEntretienDelay(); ;
+    Float noteMinimale = companyInfos.getQuizzRequirement() ; 
 
     if(moyenne>=noteMinimale)
     {
