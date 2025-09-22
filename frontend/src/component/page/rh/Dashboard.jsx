@@ -5,7 +5,7 @@ import CardList from '../../card/CardList';
 import { CardActions, CardButton } from '../../card/CardActions';
 import { CardSkeleton, CardGridSkeleton } from '../../card/CardSkeleton';
 
-const Dashboard = () => {
+const Dashboard = ({navigate}) => {
   const [loading, setLoading] = useState(false);
 
   const annonces = [
@@ -29,7 +29,7 @@ const Dashboard = () => {
       id: 3,
       title: 'Produit Pro',
       description: 'Pour les professionnels exigeants',
-      image: 'https://via.placeholder.com/300/F59E0B/FFFFFF?text=Produit+3',
+      image: 'fond1.jpeg',
       price: '99.99€',
       category: 'Bureau'
     }
@@ -79,12 +79,11 @@ const Dashboard = () => {
   }
 
   return (
-    <div className="p-6 max-w-6xl mx-auto">
+    <div className="p-6 max-w-6xl mx-auto "> {/* Ajout de ml-64 */}
       {/* En-tête */}
       <div className="flex justify-between items-center mb-8">
         <h1 className="text-3xl font-bold text-gray-900">Dashboard Test</h1>
         <div className="flex gap-4">
-          
           <button
             onClick={simulateLoading}
             className="px-4 py-2 bg-gray-500 text-white rounded-lg hover:bg-gray-600 transition-colors"
@@ -111,7 +110,6 @@ const Dashboard = () => {
               border={true}
               footer={
                 <div className="flex justify-between items-center">
-                  
                   <CardActions>
                     <CardButton 
                       variant="primary"
@@ -171,6 +169,7 @@ const Dashboard = () => {
       </section>
     </div>
   );
+  
 };
 
 export default Dashboard;

@@ -1,14 +1,14 @@
 import React, { useState } from 'react';
 
 // Composant Input Text
-const InputText = ({ label, name, value, onChange, placeholder = '', required = false, error = '' }) => {
+const InputText = ({ label, name, value, onChange, placeholder = '', required = false, error = '' ,type="text"}) => {
   return (
     <div className="mb-4">
       <label htmlFor={name} className="block text-sm font-medium text-gray-700 mb-1">
         {label} {required && <span className="text-red-500">*</span>}
       </label>
       <input
-        type="text"
+        type={type}
         id={name}
         name={name}
         value={value}

@@ -55,7 +55,8 @@ export default function SideBar({ active = "Dashboard", roles = null }) {
       setMenuItems([
         { id: 1, name: "Dashboard", path: "/dashboard", icon: DashboardIcon },
         { id: 2, name: "Profile", path: "/profile", icon: ProfileIcon },
-        { id: 3, name: "Tasks", path: "/tasks", icon: TasksIcon },
+        { id: 3, name: "Liste CV", path: "/CvList", icon: TasksIcon },
+        { id: 4, name: "Annonce", path: "/annonce", icon: TasksIcon },
       ]);
     }
   }, [roles]);
@@ -68,11 +69,11 @@ export default function SideBar({ active = "Dashboard", roles = null }) {
   const handleLogout = () => {
     // Add logout logic here
     console.log("User logged out");
-    navigate("/login");
+    navigate("/");
   };
 
   return (
-    <div className="w-64 bg-gradient-to-b from-gray-800 to-gray-900 text-white h-screen flex flex-col shadow-xl fixed">
+    <div className="w-64 bg-gradient-to-b from-gray-800 to-gray-900 text-white h-screen flex flex-col shadow-xl fixed left-0 top-0 z-50">
       <h2 className="text-xl font-bold p-5 border-b border-gray-700 flex items-center">
         <span className="bg-blue-500 p-2 rounded-lg mr-3">
           <DashboardIcon />
