@@ -15,6 +15,20 @@ public class CandidatureController {
 
     private final CandidatureService candidatureService;
 
+    @GetMapping({"/infos/{id}","/infos/{id}/"})
+    public Map<String,Object> getInfos(@PathVariable("id") Integer id) {
+        Map<String,Object> infos = new HashMap<>();
+        try {
+            Candidature candidature = candidatureService.findCandidatureById(id);
+            infos.put("id_metier",candidature.getBesoin().getMetier().getId());
+            infos.put("id_dept",candidature.getBesoin().getDepartement().getId());
+        } catch (Exception e) {
+            infos.put("error", "Candidature introuvable");
+            e.printStackTrace();
+        }
+        return infos;
+    }
+  
     @GetMapping
     public ResponseEntity<List<CandidatureSimpleDTO>> getAllCandidatures() {
         return ResponseEntity.ok(candidatureService.getAllCandidatures());

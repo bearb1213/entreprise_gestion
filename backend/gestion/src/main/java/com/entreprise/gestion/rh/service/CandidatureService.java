@@ -15,6 +15,11 @@ public class CandidatureService {
 
     private final CandidatureRepository candidatureRepository;
 
+    public Candidature findCandidatureById(Integer id) throws Exception
+    {
+        return candidatureRepository.findById(id).orElseThrow(()->new MyException("Candidature introuvable"));
+    }
+  
     /**
      * Récupérer toutes les candidatures avec conversion en DTO simplifié
      */
