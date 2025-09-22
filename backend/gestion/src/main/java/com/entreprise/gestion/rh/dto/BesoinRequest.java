@@ -20,8 +20,9 @@ public class BesoinRequest {
     
     private Integer metierId;
     private Integer departementId;
-    private List<Integer> competenceIds;
-    private List<Integer> langueIds;
-    private List<Integer> diplomeFiliereIds;
+    
+    private List<IdWithCoeff> competences;       
+    private List<IdWithCoeff> langues;           
+    private List<IdWithCoeff> diplomeFilieres;
 }
 

@@ -10,6 +10,7 @@ import org.springframework.stereotype.Service;
 import com.entreprise.gestion.rh.dto.BesoinCriteria;
 import com.entreprise.gestion.rh.dto.BesoinDTO;
 import com.entreprise.gestion.rh.dto.BesoinRequest;
+import com.entreprise.gestion.rh.dto.IdWithCoeff;
 import com.entreprise.gestion.rh.model.Besoin;
 import com.entreprise.gestion.rh.model.BesoinCompetence;
 import com.entreprise.gestion.rh.model.BesoinDiplomeFiliere;
@@ -92,41 +93,41 @@ public class BesoinService {
                 .orElseThrow(() -> new RuntimeException("Metier non trouvé")));
         besoin.setDepartement(departementRepository.findById(request.getDepartementId())
                 .orElseThrow(() -> new RuntimeException("Departement non trouvé")));
-       
+
         besoin = besoinRepository.save(besoin);
 
-        if (request.getCompetenceIds() != null) {
-            for (Integer compId : request.getCompetenceIds()) {
-                Competence comp = competenceRepository.findById(compId)
+        if (request.getCompetences() != null) {
+            for (IdWithCoeff compDto : request.getCompetences()) {
+                Competence comp = competenceRepository.findById(compDto.getId())
                         .orElseThrow(() -> new RuntimeException("Compétence non trouvée"));
                 BesoinCompetence bc = new BesoinCompetence();
                 bc.setBesoin(besoin);
                 bc.setCompetence(comp);
-                bc.setCoeff(1);
+                bc.setCoeff(compDto.getCoeff()); 
                 besoin.getBesoinCompetences().add(bc);
             }
         }
 
-        if (request.getLangueIds() != null) {
-            for (Integer langId : request.getLangueIds()) {
-                Langue lang = langueRepository.findById(langId)
+        if (request.getLangues() != null) {
+            for (IdWithCoeff langDto : request.getLangues()) {
+                Langue lang = langueRepository.findById(langDto.getId())
                         .orElseThrow(() -> new RuntimeException("Langue non trouvée"));
                 BesoinLangue bl = new BesoinLangue();
                 bl.setBesoin(besoin);
                 bl.setLangue(lang);
-                bl.setCoeff(1);
+                bl.setCoeff(langDto.getCoeff()); 
                 besoin.getBesoinLangues().add(bl);
             }
         }
 
-        if (request.getDiplomeFiliereIds() != null) {
-            for (Integer dfId : request.getDiplomeFiliereIds()) {
-                DiplomeFiliere df = diplomeFiliereRepository.findById(dfId)
+        if (request.getDiplomeFilieres() != null) {
+            for (IdWithCoeff dfDto : request.getDiplomeFilieres()) {
+                DiplomeFiliere df = diplomeFiliereRepository.findById(dfDto.getId())
                         .orElseThrow(() -> new RuntimeException("Diplome-Filiere non trouvé"));
                 BesoinDiplomeFiliere bd = new BesoinDiplomeFiliere();
                 bd.setBesoin(besoin);
                 bd.setDiplomeFiliere(df);
-                bd.setCoeff(1);
+                bd.setCoeff(dfDto.getCoeff()); 
                 besoin.getBesoinDiplomeFilieres().add(bd);
             }
         }
