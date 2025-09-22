@@ -18,7 +18,7 @@ public class NoteController {
     public ResponseEntity<?> createNote(@RequestBody NoteCreationDTO noteDTO) {
         try {
             Notes savedNote = notesService.saveNote(noteDTO);
-            return ResponseEntity.ok(savedNote);
+            return ResponseEntity.ok("");
         } catch (RuntimeException e) {
             return ResponseEntity.badRequest().body(e.getMessage());
         } catch (Exception e) {
