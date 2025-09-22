@@ -25,6 +25,7 @@ export default function SideBar() {
   const [menuItems] = React.useState([
     { id: 1, name: "Dashboard", path: "/dashboard", icon: DashboardIcon },
     { id: 2, name: "Candidature", path: "/candidature", icon: CandidatureIcon },
+    { id: 3, name: "Entretien", path: "/entretien", icon: CandidatureIcon },
   ]);
 
   const handleLogout = () => {

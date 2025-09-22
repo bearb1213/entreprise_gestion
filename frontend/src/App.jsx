@@ -3,6 +3,7 @@ import './assets/App.css'
 import SideBar from './component/SideBar.jsx'
 import CvForm from './component/CvForm.jsx'
 import Questionnaire from './component/Questionnaire.jsx'
+import EntretienNote from './component/EntretienNote.jsx'
 import { Routes, Route, Navigate } from "react-router-dom";
 
 function App() {
@@ -24,6 +25,7 @@ function App() {
             } 
           />
           <Route path="/candidature" element={<CvForm />} />
+          <Route path="/entretien" element={<EntretienNote />} />
           <Route path="/questionnaire/:candidatureId" element={<Questionnaire />} />
         </Routes>
       </div>
