@@ -16,6 +16,7 @@ import org.springframework.web.bind.annotation.RequestParam;
 
 import org.springframework.web.bind.annotation.RestController;
 
+import com.entreprise.gestion.config.CompanyInfos;
 import com.entreprise.gestion.exception.MyException;
 import com.entreprise.gestion.rh.dto.QuestionDto;
 import com.entreprise.gestion.rh.model.Choix;
@@ -33,6 +34,9 @@ public class QuestionController {
 
     @Autowired
     private ChoixService choixService ;
+
+    @Autowired
+    private CompanyInfos companyInfos;
 
     @PostMapping({"/create","/create"})
     public HashMap<String,Object> createQuestion(@RequestBody Map<String, Object> data)
@@ -76,9 +80,9 @@ public class QuestionController {
     @PostMapping({"/", ""})
     public List<Object> getQuestions(@RequestParam("id_dept") Integer deptId, @RequestParam("id_metier") Integer metierId) {
         List<Object> response = new ArrayList<>();
-        int nbDeptQuestions = 3;
-        int nbMetierQuestions = 3;
-        int nbGeneralQuestions = 4;
+        int nbDeptQuestions = companyInfos.getDeptQuestions();
+        int nbMetierQuestions = companyInfos.getMetierQuestions();
+        int nbGeneralQuestions = companyInfos.getGeneralQuestions();
 
         List<Question> questionsDept = questionService.getQuestionsAleatoiresParDepartement(deptId, nbDeptQuestions);
         List<Question> questionsMetier = questionService.getQuestionsAleatoiresParMetier(metierId, nbMetierQuestions);
