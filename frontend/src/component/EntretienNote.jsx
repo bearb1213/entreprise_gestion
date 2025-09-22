@@ -10,8 +10,8 @@ const EntretienNote = () => {
         note: "",
     });
     const [loading, setLoading] = useState(true);
+    const [submitting, setSubmitting] = useState(false);
 
-    // Base URL pour les API
     const API_BASE_URL = "http://localhost:8080/api";
 
     useEffect(() => {
@@ -42,6 +42,8 @@ const EntretienNote = () => {
 
     const handleSubmit = async (e) => {
         e.preventDefault();
+        setSubmitting(true);
+        
         try {
             const noteData = {
                 note: parseFloat(formData.note),
@@ -49,13 +51,24 @@ const EntretienNote = () => {
                 evaluationId: parseInt(formData.evaluationId)
             };
 
-            await axios.post(`${API_BASE_URL}/notes`, noteData);
+            console.log("Données envoyées:", noteData);
+
+            const response = await axios.post(`${API_BASE_URL}/notes`, noteData);
+            console.log("Réponse du serveur:", response.data);
+            
             alert("Note ajoutée avec succès !");
             setFormData({ candidatureId: "", evaluationId: "", note: "" });
         } catch (error) {
             console.error("Error submitting note:", error);
-            const errorMessage = error.response?.data || "Erreur lors de l'ajout de la note";
-            alert(errorMessage);
+            console.error("Response data:", error.response?.data);
+            console.error("Response status:", error.response?.status);
+            
+            const errorMessage = error.response?.data 
+                || error.response?.data?.message 
+                || "Erreur lors de l'ajout de la note";
+            alert(`Erreur: ${errorMessage}`);
+        } finally {
+            setSubmitting(false);
         }
     };
 
@@ -128,9 +141,12 @@ const EntretienNote = () => {
                 </div>
                 <button
                     type="submit"
-                    className="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline transition duration-300"
+                    disabled={submitting}
+                    className={`bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline transition duration-300 ${
+                        submitting ? 'opacity-50 cursor-not-allowed' : ''
+                    }`}
                 >
-                    Ajouter la note
+                    {submitting ? 'Ajout en cours...' : 'Ajouter la note'}
                 </button>
             </form>
         </div>
