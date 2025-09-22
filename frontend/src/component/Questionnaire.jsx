@@ -4,18 +4,31 @@ import { useParams } from "react-router-dom";
 // ici je dois recuperer un pathVariable contenu dans le lien menant a cette page
 
 
-async function fetchQuestions() {
+async function fetchQuestions(idCandidature) {
     try {
-        const formData = new URLSearchParams();
-        formData.append('id_dept', '1');
-        formData.append('id_metier', '1');
+
+        const formDataRaw = await fetch(`http://localhost:8080/candidature/infos/${idCandidature}`);
+        console.log("FORM-DATA");
+        console.log(formDataRaw);
+        const formData = await formDataRaw.json();
+        console.log(formData);
+
+        if(!formDataRaw.ok)
+        {
+            throw new Error('Network response for the candidature infos was not ok');
+        }
+
+        const urlEncodedData = new URLSearchParams();
+        for (const key in formData) {
+            urlEncodedData.append(key, formData[key]);
+        }
 
         const response = await fetch('http://localhost:8080/questions', {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/x-www-form-urlencoded; charset=UTF-8',
             },
-            body: formData
+            body: urlEncodedData
         });
         
         if (!response.ok) {
@@ -132,7 +145,7 @@ function Questionnaire() {
     useEffect(() => {
         const getQuestions = async () => {
             setIsLoading(true);
-            const fetchedQuestions = await fetchQuestions();
+            const fetchedQuestions = await fetchQuestions(candidatureId);
             if (fetchedQuestions) {
                 const questionsWithIds = fetchedQuestions.map((q, index) => ({
                     ...q,
