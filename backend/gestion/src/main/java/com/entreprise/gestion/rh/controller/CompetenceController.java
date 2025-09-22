@@ -5,6 +5,7 @@ import com.entreprise.gestion.rh.service.CompetenceService;
 import com.entreprise.gestion.rh.dto.CompetenceDTO;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -16,6 +17,7 @@ public class CompetenceController {
     @Autowired
     private CompetenceService competenceService;
 
+     @PreAuthorize("hasRole('isAuthenticated'")
     @GetMapping
     public ResponseEntity<List<CompetenceDTO>> getAllCompetences() {
         List<CompetenceDTO> competences = competenceService.getAll().stream()
@@ -24,6 +26,7 @@ public class CompetenceController {
         return ResponseEntity.ok(competences);
     }
 
+    @PreAuthorize("hasRole('isAuthenticated'")
     @GetMapping("/{id}")
     public ResponseEntity<CompetenceDTO> getCompetenceById(@PathVariable Integer id) {
         Competence competence = competenceService.getById(id);
@@ -34,13 +37,14 @@ public class CompetenceController {
         return ResponseEntity.notFound().build();
     }
 
+    @PreAuthorize("hasRole('isAuthenticated'")
     @PostMapping
     public ResponseEntity<CompetenceDTO> createCompetence(@RequestBody Competence competence) {
         Competence createdCompetence = competenceService.createCompetence(competence);
         CompetenceDTO dto = new CompetenceDTO(createdCompetence.getId(), createdCompetence.getLibelle());
         return ResponseEntity.ok(dto);
     }
-
+    @PreAuthorize("hasRole('Admin' or hasRole('Rh') or hasRole('Departement')")
     @PutMapping("/{id}")
     public ResponseEntity<CompetenceDTO> updateCompetence(@PathVariable Integer id, @RequestBody Competence competence) {
         Competence updatedCompetence = competenceService.updateCompetence(id, competence);
@@ -48,6 +52,7 @@ public class CompetenceController {
         return ResponseEntity.ok(dto);
     }
 
+    @PreAuthorize("hasRole('Admin' or hasRole('Rh') or hasRole('Departement')")
     @DeleteMapping("/{id}")
     public ResponseEntity<Void> deleteCompetence(@PathVariable Integer id) {
         competenceService.deleteCompetence(id);

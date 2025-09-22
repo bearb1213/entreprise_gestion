@@ -1,6 +1,7 @@
 package com.entreprise.gestion.rh.service;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.core.io.ByteArrayResource;
 import org.springframework.mail.SimpleMailMessage;
 import org.springframework.mail.javamail.JavaMailSender;
 import org.springframework.mail.javamail.MimeMessageHelper;
@@ -92,8 +93,11 @@ public class EmailService {
         
         sendHtmlEmail(to, "Bienvenue - Système RH", htmlContent);
     }
-    public void sendConfirmationEmail(String to, String candidateName) throws MessagingException {
+    public void sendConfirmationEmail(String to, String candidateName, int idCandidature) throws MessagingException {
         String subject = "Confirmation de réception de votre candidature - Entreprise XYZ";
+        
+        // Construire le lien avec l'ID candidature
+        String questionnaireLink = "http://localhost:5173/questionnaire/" + idCandidature;
         
         String htmlContent = """
             <!DOCTYPE html>
@@ -204,6 +208,20 @@ public class EmailService {
                         font-style: italic;
                         color: #6c757d;
                     }
+                    .button {
+                        display: inline-block;
+                        background: #007bff;
+                        color: white;
+                        padding: 15px 30px;
+                        text-decoration: none;
+                        border-radius: 5px;
+                        font-weight: 600;
+                        margin: 20px 0;
+                        text-align: center;
+                    }
+                    .button:hover {
+                        background: #0056b3;
+                    }
                 </style>
             </head>
             <body>
@@ -225,9 +243,15 @@ public class EmailService {
                         <div class="important-info">
                             <div class="info-title">📋 PROCHAIN ÉTAPE : TEST QCM</div>
                             <div class="info-details">
-                                Votre test QCM est programmé pour :<br>
-                                <span class="date-time">📅 Demain à 12h00</span>
+                                Votre test QCM est programmé dans :<br>
+                                <span class="date-time">📅 1 heure</span>
                             </div>
+                        </div>
+                        
+                        <div style="text-align: center;">
+                            <a href="%s" class="button">
+                                🚀 Accéder au questionnaire
+                            </a>
                         </div>
                         
                         <div class="instructions">
@@ -237,11 +261,12 @@ public class EmailService {
                                 <li>Assurez-vous d'être dans un environnement calme</li>
                                 <li>Ayez une connexion internet stable</li>
                                 <li>Préparez votre pièce d'identité</li>
-                                <li>Le lien de connexion vous sera envoyé 30 minutes avant le test</li>
+                                <li>Le lien est valable pendant 24 heures</li>
                             </ul>
                         </div>
                         
                         <div class="message">
+                            <strong>Lien direct :</strong> %s<br><br>
                             Nous vous encourageons à vous préparer sérieusement à cette évaluation, 
                             qui constitue une étape importante dans le processus de recrutement.
                         </div>
@@ -264,8 +289,20 @@ public class EmailService {
                 </div>
             </body>
             </html>
-            """.formatted(candidateName);
+            """.formatted(candidateName, questionnaireLink, questionnaireLink);
         
         sendHtmlEmail(to, subject, htmlContent);
+    }
+    public void sendHtmlEmailWithAttachment(String to, String subject, String htmlContent,String fileName,byte[] attachmentData,String contentType) throws MessagingException {
+        MimeMessage message = mailSender.createMimeMessage();
+        MimeMessageHelper helper = new MimeMessageHelper(message, true, "UTF-8");
+        
+        helper.setTo(to);
+        helper.setSubject(subject);
+        helper.setText(htmlContent, true);
+        helper.setFrom("noreply@entreprise.com");
+        helper.addAttachment(fileName, new ByteArrayResource(attachmentData),contentType);
+        
+        mailSender.send(message);
     }
 }

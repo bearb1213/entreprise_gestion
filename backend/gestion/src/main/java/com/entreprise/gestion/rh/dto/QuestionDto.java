@@ -2,7 +2,6 @@ package com.entreprise.gestion.rh.dto;
 
 import java.util.List;
 
-import com.entreprise.gestion.rh.model.Metier;
 
 import lombok.AllArgsConstructor;
 import lombok.Getter;
