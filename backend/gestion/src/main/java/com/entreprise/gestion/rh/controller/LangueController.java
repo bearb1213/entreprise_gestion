@@ -8,7 +8,7 @@ import org.springframework.web.bind.annotation.*;
 import java.util.List;
 
 @RestController
-@RequestMapping("/api/public/langues")
+@RequestMapping("/api/langues")
 @RequiredArgsConstructor
 public class LangueController {
 

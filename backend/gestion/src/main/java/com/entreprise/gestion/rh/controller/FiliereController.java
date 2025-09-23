@@ -11,32 +11,41 @@ import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.bind.annotation.RequestMapping;
 import java.util.List;
+import java.util.ArrayList;
 import java.util.Map;
 import java.util.stream.Collectors;
 
 @RestController
 @RequiredArgsConstructor
-@RequestMapping("/api/public/filieres")
+@RequestMapping("/api/filieres")
 public class FiliereController {
 
     private final FiliereService filiereService;
     private final DiplomeFiliereService diplomeFiliereService;
 
-    // GET {id}/diplomes
+
     @GetMapping("{id}/diplomes")
-    public Map<Integer, String> getDiplomesByFiliere(@PathVariable Integer id) {
+    public List<Diplome> getDiplomesByFiliere(@PathVariable Integer id) {
         Filiere filiere = filiereService.getById(id);
         if (filiere != null) {
             List<DiplomeFiliere> liaisons = diplomeFiliereService.getDiplomesByFiliere(filiere);
+            List<Diplome> diplomes = new ArrayList<>();
+            for (int i =0 ; i<liaisons.size(); i++) {
+                Diplome d= liaisons.get(i).getDiplome();
+                d.setId(liaisons.get(i).getId());
+                d.setDiplomeFilieres(null);
+                
+                diplomes.add(d);
+            }
 
-            return liaisons.stream()
-                    .collect(Collectors.toMap(
-                            DiplomeFiliere::getId,          // clé : id de la liaison
-                            df -> df.getDiplome().getLibelle() // valeur : nom du diplôme
-                    ));
+            return diplomes;
         }
-        return Map.of(); // Map vide si filière non trouvée
+        return List.of(); // Liste vide si filière non trouvée
     }
+
+
+
+
 
     @GetMapping
     public List<Filiere> getAllFilieres() {

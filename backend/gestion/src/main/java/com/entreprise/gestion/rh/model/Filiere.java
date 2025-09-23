@@ -4,6 +4,7 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 import lombok.AllArgsConstructor;
 import jakarta.persistence.*;
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import java.util.List;
 
 @Entity
@@ -19,5 +20,6 @@ public class Filiere {
     private String libelle;
     
     @OneToMany(mappedBy = "filiere", fetch = FetchType.LAZY)
+     @JsonIgnore
     private List<DiplomeFiliere> diplomeFilieres;
 }

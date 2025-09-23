@@ -21,6 +21,7 @@ public class LangueService {
         List<Langue> langues= langueRepository.findAll();
         for(Langue langue : langues) {
             langue.setBesoinLangues(null);
+            langue.setCandidats(null);
         }
         return langues;
     }

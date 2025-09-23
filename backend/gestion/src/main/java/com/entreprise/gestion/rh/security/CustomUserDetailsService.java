@@ -34,7 +34,8 @@ public class CustomUserDetailsService implements UserDetailsService {
                 .orElseThrow(() -> new UsernameNotFoundException("Utilisateur non trouvé"));
 
         Collection<GrantedAuthority> authorities = new ArrayList<>();
-        if (utilisateur.getDepartement() != null && utilisateur.getDepartement().getLibelle() == "Admin" || utilisateur.getDepartement().getLibelle() == "Rh") {
+        System.out.println("TOKONY ROLE: " + utilisateur.getDepartement().getLibelle());
+        if (utilisateur.getDepartement() != null && utilisateur.getDepartement().getLibelle().equals("Admin") || utilisateur.getDepartement().getLibelle().equals("Rh")) {
             String role = utilisateur.getDepartement().getLibelle().toUpperCase();
             authorities.add(new SimpleGrantedAuthority("ROLE_" + role));
         } else {

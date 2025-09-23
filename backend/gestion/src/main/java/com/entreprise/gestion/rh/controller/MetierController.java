@@ -8,7 +8,7 @@ import org.springframework.web.bind.annotation.*;
 import java.util.List;
 
 @RestController
-@RequestMapping("/api/public/metiers")
+@RequestMapping("/api/metiers")
 @RequiredArgsConstructor
 public class MetierController {
 

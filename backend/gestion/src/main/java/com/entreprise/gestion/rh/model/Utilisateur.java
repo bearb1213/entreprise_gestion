@@ -5,6 +5,7 @@ import lombok.NoArgsConstructor;
 import lombok.AllArgsConstructor;
 import jakarta.persistence.*;
 
+
 @Entity
 @Table(name = "utilisateur")
 @Data

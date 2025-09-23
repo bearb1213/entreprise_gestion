@@ -9,9 +9,15 @@ import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 import org.springframework.http.MediaType;
 import java.util.Map;
+import java.util.List;
+import java.util.HashMap;
+import java.io.IOException;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import org.springframework.http.HttpStatus;
+import java.time.LocalDateTime;
 
 @RestController
-@RequestMapping("/api/public/candidats")
+@RequestMapping("/api/candidats")
 @RequiredArgsConstructor
 public class CandidatController {
 
@@ -26,29 +32,74 @@ public class CandidatController {
      * @param autresFiles Autres fichiers
      * @return le candidat créé
      */
-    @PostMapping("/creer")
+    @PostMapping(value="/creer", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     public ResponseEntity<?> creerCandidat(
-            @RequestBody Map<String, Object> candidateData,
-            @RequestParam(value = "image_file", required = false) MultipartFile imageFile,
-            @RequestParam(value = "cv_file", required = false) MultipartFile cvFile,
-            @RequestParam(value = "diplome_files", required = false) MultipartFile[] diplomeFiles,
-            @RequestParam(value = "autres_files", required = false) MultipartFile[] autresFiles
-    ) {
+            @RequestParam("data") String candidatDataJson,  // Toutes les données en JSON
+            @RequestParam(value = "image", required = false) MultipartFile imageFile) {
+        
         try {
-
-            // Ajouter les fichiers dans la Map
-            candidateData.put("image_file", imageFile);
-            candidateData.put("cv_file", cvFile);
-            candidateData.put("diplome_files", diplomeFiles != null ? java.util.Arrays.asList(diplomeFiles) : null);
-            candidateData.put("autres_files", autresFiles != null ? java.util.Arrays.asList(autresFiles) : null);
-
+            ObjectMapper mapper = new ObjectMapper();
+            Map<String, Object> candidateData = mapper.readValue(candidatDataJson, Map.class);
+            
+            // Traitement...
             candidatService.creerCandidat(candidateData);
+            
+            if (imageFile != null && !imageFile.isEmpty()) {
+                candidatService.saveFile(imageFile, "images/");
+            }
+            
+            return ResponseEntity.ok("Candidat créé avec succès");
+        } catch (Exception e) {
+            return ResponseEntity.badRequest().body(e.getMessage());
+        }
+    }
 
-            return ResponseEntity.ok().body("Candidat créé avec succès");
+    @PostMapping(value="/sary" , consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    public ResponseEntity<?> uploadImage(@RequestParam("image") MultipartFile imageFile) {
+        try {
+            candidatService.saveFile(imageFile , "images/");
+            return ResponseEntity.ok("Image enregistrée avec succès");
         } catch (MyException e) {
             return ResponseEntity.badRequest().body(e.getMessage());
+        }
+
+    }
+
+
+    @GetMapping
+    public ResponseEntity<Map<String, Object>> getAllCandidats() {
+        try {
+            Map<String, Object> result = candidatService.listerCandidats();
+            return ResponseEntity.ok(result);
         } catch (Exception e) {
-            return ResponseEntity.internalServerError().body("Erreur serveur : " + e.getMessage());
+            Map<String, Object> error = new HashMap<>();
+            error.put("success", false);
+            error.put("message", "Erreur lors de la récupération de la liste des candidats");
+            error.put("error", e.getMessage());
+            error.put("timestamp", LocalDateTime.now());
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(error);
+        }
+    }
+    
+    // GET BY ID - Retourne un candidat spécifique par son ID
+    @GetMapping("/{id}")
+    public ResponseEntity<Map<String, Object>> getCandidatById(@PathVariable Integer id) {
+        try {
+            Map<String, Object> result = candidatService.getCandidatMap(id);
+            return ResponseEntity.ok(result);
+        } catch (MyException e) {
+            Map<String, Object> error = new HashMap<>();
+            error.put("success", false);
+            error.put("message", e.getMessage());
+            error.put("timestamp", LocalDateTime.now());
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(error);
+        } catch (Exception e) {
+            Map<String, Object> error = new HashMap<>();
+            error.put("success", false);
+            error.put("message", "Erreur lors de la récupération du candidat");
+            error.put("error", e.getMessage());
+            error.put("timestamp", LocalDateTime.now());
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(error);
         }
     }
 }

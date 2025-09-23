@@ -8,6 +8,8 @@ import com.entreprise.gestion.rh.model.Langue;
 import com.entreprise.gestion.rh.model.Personne;
 import com.entreprise.gestion.rh.model.Besoin;
 import com.entreprise.gestion.rh.model.Candidature;
+import com.entreprise.gestion.rh.model.Entretien;
+
 
 import com.entreprise.gestion.rh.repository.CandidatRepository;
 import com.entreprise.gestion.rh.repository.CompetenceRepository;
@@ -22,16 +24,21 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
 import java.io.File;
 import java.io.IOException;
-
+import java.io.InputStream;
+import java.nio.file.StandardCopyOption;
 import java.util.Date;
 import java.util.List;
 import java.util.Map;
+import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.stream.Collectors;
 import java.time.LocalDate;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-
+import com.fasterxml.jackson.databind.ObjectMapper;
+import java.time.LocalDateTime;
+import java.util.LinkedHashMap;
 
 
 @Service
@@ -48,20 +55,47 @@ public class CandidatService {
     @Transactional
     public void creerCandidat(Map<String, Object> data) throws MyException {
         try {
-
+            System.out.println("=== DEBUG Données reçues ===");
+            for (Map.Entry<String, Object> entry : data.entrySet()) {
+                System.out.println(entry.getKey() + " = " + entry.getValue() + " (type: " + 
+                    (entry.getValue() != null ? entry.getValue().getClass().getName() : "null") + ")");
+            }
+            
+            // Extraction et conversion des données
             String nom = (String) data.get("nom");
             String prenom = (String) data.get("prenom");
             String email = (String) data.get("email");
-
-            if (personneRepository.existsByEmail(email)) {
-                throw new MyException("Une personne avec cet email existe déjà : " + email);
+            String ville = (String) data.get("ville");
+            String telephone = (String) data.get("telephone");
+            String description = (String) data.get("description");
+            
+            // Conversion sécurisée du genre
+            Object genreObj = data.get("genre");
+            Integer genre;
+            if (genreObj instanceof Integer) {
+                genre = (Integer) genreObj;
+            } else if (genreObj instanceof String) {
+                try {
+                    genre = Integer.parseInt((String) genreObj);
+                } catch (NumberFormatException e) {
+                    throw new MyException("Format de genre invalide: " + genreObj);
+                }
+            } else {
+                throw new MyException("Format de genre invalide: " + genreObj);
             }
-
-            // Vérification âge
+            
+            // Conversion de la date de naissance
             LocalDate dateNaissance = LocalDate.parse((String) data.get("date_naissance"));
+            
+            // Vérification âge
             int age = LocalDate.now().getYear() - dateNaissance.getYear();
             if (age < 18 || age > 60) {
                 throw new MyException("L'âge doit être compris entre 18 et 60 ans. Actuellement : " + age);
+            }
+            
+            // Vérification email
+            if (personneRepository.existsByEmail(email)) {
+                throw new MyException("Une personne avec cet email existe déjà : " + email);
             }
 
             // Création de la personne
@@ -69,9 +103,9 @@ public class CandidatService {
                     .nom(nom)
                     .prenom(prenom)
                     .email(email)
-                    .ville((String) data.get("ville"))
-                    .telephone((String) data.get("telephone"))
-                    .genre((Integer) data.get("genre"))
+                    .ville(ville)
+                    .telephone(telephone)
+                    .genre(genre) // Utilise la valeur convertie
                     .dateNaissance(dateNaissance)
                     .build();
 
@@ -80,43 +114,24 @@ public class CandidatService {
             // Création du candidat
             Candidat candidat = Candidat.builder()
                     .personne(personne)
-                    .description((String) data.get("description"))
+                    .description(description)
                     .build();
 
-            String baseUpload = "uploads";
-
-            // --- Gestion des fichiers ---
-            MultipartFile imageFile = (MultipartFile) data.get("image_file");
-            if (imageFile != null && !imageFile.isEmpty()) {
-                String imagePath = saveFile(imageFile, baseUpload + "/images/" + nom + prenom);
-                personne.setImage(imagePath);
-            }
-
-            MultipartFile cvFile = (MultipartFile) data.get("cv_file");
-            if (cvFile != null && !cvFile.isEmpty()) {
-                saveFile(cvFile, baseUpload + "/cv/" + nom + prenom);
-            }
-
-            // Diplômes
-            List<MultipartFile> diplomeFiles = (List<MultipartFile>) data.get("diplome_files");
-            if (diplomeFiles != null) {
-                for (MultipartFile file : diplomeFiles) {
-                    saveFile(file, baseUpload + "/diplomes/" + nom + prenom);
-                }
-            }
-
-            // Autres fichiers
-            List<MultipartFile> autresFiles = (List<MultipartFile>) data.get("autres_files");
-            if (autresFiles != null) {
-                for (MultipartFile file : autresFiles) {
-                    saveFile(file, baseUpload + "/autres/" + nom + prenom);
-                }
-            }
-
             // --- Compétences ---
-            List<Integer> competencesIds = (List<Integer>) data.get("competences");
-            if (competencesIds != null) {
-                List<Competence> comps = new java.util.ArrayList<>();
+            List<?> competencesRaw = (List<?>) data.get("competences");
+            List<Integer> competencesIds = new ArrayList<>();
+            if (competencesRaw != null) {
+                for (Object item : competencesRaw) {
+                    if (item instanceof Integer) {
+                        competencesIds.add((Integer) item);
+                    } else if (item instanceof String) {
+                        competencesIds.add(Integer.parseInt((String) item));
+                    }
+                }
+            }
+
+            if (!competencesIds.isEmpty()) {
+                List<Competence> comps = new ArrayList<>();
                 for (Integer id : competencesIds) {
                     competenceRepository.findById(id).ifPresent(comps::add);
                 }
@@ -124,9 +139,20 @@ public class CandidatService {
             }
 
             // --- Langues ---
-            List<Integer> languesIds = (List<Integer>) data.get("langues");
-            if (languesIds != null) {
-                List<Langue> langs = new java.util.ArrayList<>();
+            List<?> languesRaw = (List<?>) data.get("langues");
+            List<Integer> languesIds = new ArrayList<>();
+            if (languesRaw != null) {
+                for (Object item : languesRaw) {
+                    if (item instanceof Integer) {
+                        languesIds.add((Integer) item);
+                    } else if (item instanceof String) {
+                        languesIds.add(Integer.parseInt((String) item));
+                    }
+                }
+            }
+
+            if (!languesIds.isEmpty()) {
+                List<Langue> langs = new ArrayList<>();
                 for (Integer id : languesIds) {
                     langueRepository.findById(id).ifPresent(langs::add);
                 }
@@ -134,63 +160,437 @@ public class CandidatService {
             }
 
             // --- Diplômes filières ---
-            List<Integer> diplomeIds = (List<Integer>) data.get("diplomes");
-            if (diplomeIds != null) {
-                List<DiplomeFiliere> diplomes = new java.util.ArrayList<>();
+            List<?> diplomeRaw = (List<?>) data.get("filiere");
+            List<Integer> diplomeIds = new ArrayList<>();
+            if (diplomeRaw != null) {
+                for (Object item : diplomeRaw) {
+                    if (item instanceof Integer) {
+                        diplomeIds.add((Integer) item);
+                    } else if (item instanceof String) {
+                        diplomeIds.add(Integer.parseInt((String) item));
+                    }
+                }
+            }
+
+            if (!diplomeIds.isEmpty()) {
+                List<DiplomeFiliere> diplomes = new ArrayList<>();
                 for (Integer id : diplomeIds) {
                     diplomeFiliereRepository.findById(id).ifPresent(diplomes::add);
                 }
                 candidat.setDiplomeFilieres(diplomes);
             }
+                System.out.println("MIDITRA 01");
 
             // --- Expériences ---
-            Map<String, Integer> experiences = (Map<String, Integer>) data.get("experiences");
-            if (experiences != null) {
-                List<Experience> experienceList = new java.util.ArrayList<>();
-                for (Map.Entry<String, Integer> entry : experiences.entrySet()) {
-                    Experience exp = new Experience();
-                    exp.setNbAnnee(entry.getValue());
-                    metierRepository.findById(Integer.parseInt(entry.getKey())).ifPresent(exp::setMetier);
-                    exp.setCandidat(candidat);
-                    if (exp.getMetier() != null) {
-                        experienceList.add(exp);
+            List<?> metiersRaw = (ArrayList<?>) data.get("metiers");
+            List<Experience> experienceList = new ArrayList<>();
+            
+            if (metiersRaw != null) {
+                for (Object item : metiersRaw) {
+                    System.out.println("\n\n\n\n\n\n"+item.getClass().getName());
+                    if (item instanceof Map) {
+                        Map<String, Object> metierMap = (Map<String, Object>) item;
+        
+                        System.out.println("Clés de la map: " + metierMap.keySet());
+                        System.out.println("Valeurs: metier=" + metierMap.get("metier") + ", experience=" + metierMap.get("experience"));
+                        Object metierIdObj = metierMap.get("metier");
+                        Object experienceObj = metierMap.get("experience");
+                        
+                        if (metierIdObj != null && experienceObj != null) {
+                            Integer metierId=null;
+                            Integer experience=null;
+                            
+                            // Conversion metierId
+                            if (metierIdObj instanceof Integer) {
+                                metierId = (Integer) metierIdObj;
+                            } else if (metierIdObj instanceof String) {
+                                metierId = Integer.parseInt((String) metierIdObj);
+                            } else {
+                                System.out.println("FORMAT INVALIDE");
+
+                            }
+                            
+                            // Conversion experience
+                            if (experienceObj instanceof Integer) {
+                                experience = (Integer) experienceObj;
+                            } else if (experienceObj instanceof String) {
+                                experience = Integer.parseInt((String) experienceObj);
+                            } else {
+                                System.out.println("FORMAT INVALIDE");
+                            }
+                            
+                            Experience exp = new Experience();
+                            exp.setNbAnnee(experience);
+                            metierRepository.findById(metierId).ifPresent(exp::setMetier);
+                            exp.setCandidat(candidat);
+                            
+                            if (exp.getMetier() != null) {
+                                experienceList.add(exp);
+                                System.out.println("TEST RÉUSSI - Expérience ajoutée");
+                            } else {
+                                System.out.println("LAZAINY FA NULLLLL");
+                            }
+                        }
                     }
                 }
-                candidat.setExperiences(experienceList);
             }
 
-            candidat.setCandidatures(null);
+            candidat.setExperiences(experienceList);
+            System.out.println("Experience : " + candidat.getExperiences().size());
             candidatRepository.save(candidat);
 
+        } catch (NumberFormatException e) {
+            throw new MyException("Erreur de format numérique: " + e.getMessage());
         } catch (MyException m) {
             throw m;
         } catch (Exception e) {
-            throw new MyException("Erreur lors de la création du candidat", e);
+            throw new MyException("Erreur lors de la création du candidat: " + e.getMessage());
         }
     }
 
-    private String saveFile(MultipartFile file, String folderPath) throws MyException {
+    public String saveFile(MultipartFile file, String folderPath) throws MyException {
         try {
-            Path folder = Paths.get(folderPath);
+            String tempDir = System.getProperty("java.io.tmpdir");
+            Path folder = Paths.get( folderPath);
+
             if (!Files.exists(folder)) {
                 Files.createDirectories(folder);
             }
-            String filePath = folderPath + "/" + file.getOriginalFilename();
-            file.transferTo(new File(filePath));
-            return filePath;
+
+            String fileName = System.currentTimeMillis() + "_" + file.getOriginalFilename();
+            Path filePath = folder.resolve(fileName);
+
+            // Copie plus fiable que transferTo
+            try (InputStream is = file.getInputStream()) {
+                Files.copy(is, filePath, StandardCopyOption.REPLACE_EXISTING);
+            }
+
+            return filePath.toString();
         } catch (Exception e) {
             throw new MyException("Erreur lors de la sauvegarde du fichier : " + file.getOriginalFilename(), e);
         }
     }
 
-    public List<Candidat> listerCandidats() {
-        return candidatRepository.findAll();
+
+    public Map<String, Object> listerCandidats() {
+        List<Candidat> candidats = candidatRepository.findAll();
+        Map<String, Object> result = new HashMap<>();
+        
+        List<Map<String, Object>> candidatsData = new ArrayList<>();
+
+        for (Candidat c : candidats) {
+            // Forcer l'initialisation des collections LAZY
+            c.getCompetences().size();
+            c.getLangues().size();
+            c.getDiplomeFilieres().size();
+            c.getCandidatures().size();
+            c.getExperiences().size();
+
+            // Construire l'objet candidat sous forme de Map
+            Map<String, Object> candidatMap = new HashMap<>();
+            
+            // Informations de base du candidat
+            candidatMap.put("id", c.getId());
+            candidatMap.put("description", c.getDescription());
+            
+            // Informations de la personne
+            Personne personne = c.getPersonne();
+            if (personne != null) {
+                Map<String, Object> personneMap = new HashMap<>();
+                personneMap.put("id", personne.getId());
+                personneMap.put("nom", personne.getNom());
+                personneMap.put("prenom", personne.getPrenom());
+                personneMap.put("email", personne.getEmail());
+                personneMap.put("dateNaissance", personne.getDateNaissance());
+                personneMap.put("genre", personne.getGenre());
+                personneMap.put("ville", personne.getVille());
+                personneMap.put("telephone", personne.getTelephone());
+                personneMap.put("image", personne.getImage());
+                candidatMap.put("personne", personneMap);
+            }
+            
+            // Compétences (table candidat_competence)
+            List<Map<String, Object>> competencesList = new ArrayList<>();
+            for (Competence comp : c.getCompetences()) {
+                Map<String, Object> compMap = new HashMap<>();
+                compMap.put("id", comp.getId());
+                compMap.put("libelle", comp.getLibelle());
+                competencesList.add(compMap);
+            }
+            candidatMap.put("competences", competencesList);
+            
+            // Langues (table candidat_langue)
+            List<Map<String, Object>> languesList = new ArrayList<>();
+            for (Langue langue : c.getLangues()) {
+                Map<String, Object> langueMap = new HashMap<>();
+                langueMap.put("id", langue.getId());
+                langueMap.put("libelle", langue.getLibelle());
+                languesList.add(langueMap);
+            }
+            candidatMap.put("langues", languesList);
+            
+            // Diplômes filières (table candidat_diplome_filiere)
+            List<Map<String, Object>> diplomesList = new ArrayList<>();
+            for (DiplomeFiliere df : c.getDiplomeFilieres()) {
+                Map<String, Object> diplomeMap = new HashMap<>();
+                diplomeMap.put("id", df.getId());
+                
+                if (df.getFiliere() != null) {
+                    Map<String, Object> filiereMap = new HashMap<>();
+                    filiereMap.put("id", df.getFiliere().getId());
+                    filiereMap.put("libelle", df.getFiliere().getLibelle());
+                    diplomeMap.put("filiere", filiereMap);
+                }
+                
+                if (df.getDiplome() != null) {
+                    Map<String, Object> diplomeDetailMap = new HashMap<>();
+                    diplomeDetailMap.put("id", df.getDiplome().getId());
+                    diplomeDetailMap.put("libelle", df.getDiplome().getLibelle());
+                    diplomeMap.put("diplome", diplomeDetailMap);
+                }
+                
+                diplomesList.add(diplomeMap);
+            }
+            candidatMap.put("diplomeFilieres", diplomesList);
+            
+            // Expériences (table experience)
+            List<Map<String, Object>> experiencesList = new ArrayList<>();
+            for (Experience exp : c.getExperiences()) {
+                Map<String, Object> expMap = new HashMap<>();
+                expMap.put("id", exp.getId());
+                expMap.put("nbAnnee", exp.getNbAnnee());
+                
+                if (exp.getMetier() != null) {
+                    Map<String, Object> metierMap = new HashMap<>();
+                    metierMap.put("id", exp.getMetier().getId());
+                    metierMap.put("libelle", exp.getMetier().getLibelle());
+                    expMap.put("metier", metierMap);
+                }
+                
+                experiencesList.add(expMap);
+            }
+            candidatMap.put("experiences", experiencesList);
+            
+            // Candidatures (table candidature)
+            List<Map<String, Object>> candidaturesList = new ArrayList<>();
+            for (Candidature cand : c.getCandidatures()) {
+                Map<String, Object> candMap = new HashMap<>();
+                candMap.put("id", cand.getId());
+                candMap.put("dateCandidature", cand.getDateCandidature());
+                candMap.put("statut", cand.getStatut());
+                
+                // Informations sur le besoin associé
+                if (cand.getBesoin() != null) {
+                    Map<String, Object> besoinMap = new HashMap<>();
+                    besoinMap.put("id", cand.getBesoin().getId());
+                    besoinMap.put("statut", cand.getBesoin().getStatut());
+                    besoinMap.put("minAge", cand.getBesoin().getMinAge());
+                    besoinMap.put("maxAge", cand.getBesoin().getMaxAge());
+                    besoinMap.put("nbPosteDispo", cand.getBesoin().getNbPosteDispo());
+                    besoinMap.put("minExperience", cand.getBesoin().getMinExperience());
+                    
+                    // Métier du besoin
+                    if (cand.getBesoin().getMetier() != null) {
+                        Map<String, Object> metierMap = new HashMap<>();
+                        metierMap.put("id", cand.getBesoin().getMetier().getId());
+                        metierMap.put("libelle", cand.getBesoin().getMetier().getLibelle());
+                        besoinMap.put("metier", metierMap);
+                    }
+                    
+                    // Département du besoin
+                    if (cand.getBesoin().getDepartement() != null) {
+                        Map<String, Object> deptMap = new HashMap<>();
+                        deptMap.put("id", cand.getBesoin().getDepartement().getId());
+                        deptMap.put("libelle", cand.getBesoin().getDepartement().getLibelle());
+                        besoinMap.put("departement", deptMap);
+                    }
+                    
+                    candMap.put("besoin", besoinMap);
+                }
+                
+                candidaturesList.add(candMap);
+            }
+            candidatMap.put("candidatures", candidaturesList);
+            
+            candidatsData.add(candidatMap);
+        }
+
+        // Construire le résultat final
+        result.put("success", true);
+        result.put("count", candidatsData.size());
+        result.put("candidats", candidatsData);
+        result.put("timestamp", LocalDateTime.now());
+        
+        return result;
     }
 
+
     public Candidat getCandidatById(Integer id) throws MyException {
-        return candidatRepository.findById(id)
+        Candidat c = candidatRepository.findById(id)
                 .orElseThrow(() -> new MyException("Candidat introuvable avec id=" + id));
-    }   
+
+        return c;
+    }
+
+    public Map<String, Object> getCandidatMap(Integer id) throws MyException {
+        Candidat c = candidatRepository.findById(id)
+                .orElseThrow(() -> new MyException("Candidat introuvable avec id=" + id));
+
+        // Forcer l'initialisation des collections LAZY
+        c.getCompetences().size();
+        c.getLangues().size();
+        c.getDiplomeFilieres().size();
+        c.getCandidatures().size();
+        c.getExperiences().size();
+
+        // Construire l'objet candidat sous forme de Map
+        Map<String, Object> candidatMap = new HashMap<>();
+        
+        // Informations de base du candidat
+        candidatMap.put("id", c.getId());
+        candidatMap.put("description", c.getDescription());
+        
+        // Informations de la personne
+        Personne personne = c.getPersonne();
+        if (personne != null) {
+            Map<String, Object> personneMap = new HashMap<>();
+            personneMap.put("id", personne.getId());
+            personneMap.put("nom", personne.getNom());
+            personneMap.put("prenom", personne.getPrenom());
+            personneMap.put("email", personne.getEmail());
+            personneMap.put("dateNaissance", personne.getDateNaissance());
+            personneMap.put("genre", personne.getGenre());
+            personneMap.put("ville", personne.getVille());
+            personneMap.put("telephone", personne.getTelephone());
+            personneMap.put("image", personne.getImage());
+            candidatMap.put("personne", personneMap);
+        }
+        
+        // Compétences
+        List<Map<String, Object>> competencesList = new ArrayList<>();
+        for (Competence comp : c.getCompetences()) {
+            Map<String, Object> compMap = new HashMap<>();
+            compMap.put("id", comp.getId());
+            compMap.put("libelle", comp.getLibelle());
+            competencesList.add(compMap);
+        }
+        candidatMap.put("competences", competencesList);
+        
+        // Langues
+        List<Map<String, Object>> languesList = new ArrayList<>();
+        for (Langue langue : c.getLangues()) {
+            Map<String, Object> langueMap = new HashMap<>();
+            langueMap.put("id", langue.getId());
+            langueMap.put("libelle", langue.getLibelle());
+            languesList.add(langueMap);
+        }
+        candidatMap.put("langues", languesList);
+        
+        // Diplômes filières
+        List<Map<String, Object>> diplomesList = new ArrayList<>();
+        for (DiplomeFiliere df : c.getDiplomeFilieres()) {
+            Map<String, Object> diplomeMap = new HashMap<>();
+            diplomeMap.put("id", df.getId());
+            
+            if (df.getFiliere() != null) {
+                Map<String, Object> filiereMap = new HashMap<>();
+                filiereMap.put("id", df.getFiliere().getId());
+                filiereMap.put("libelle", df.getFiliere().getLibelle());
+                diplomeMap.put("filiere", filiereMap);
+            }
+            
+            if (df.getDiplome() != null) {
+                Map<String, Object> diplomeDetailMap = new HashMap<>();
+                diplomeDetailMap.put("id", df.getDiplome().getId());
+                diplomeDetailMap.put("libelle", df.getDiplome().getLibelle());
+                diplomeMap.put("diplome", diplomeDetailMap);
+            }
+            
+            diplomesList.add(diplomeMap);
+        }
+        candidatMap.put("diplomeFilieres", diplomesList);
+        
+        // Expériences
+        List<Map<String, Object>> experiencesList = new ArrayList<>();
+        for (Experience exp : c.getExperiences()) {
+            Map<String, Object> expMap = new HashMap<>();
+            expMap.put("id", exp.getId());
+            expMap.put("nbAnnee", exp.getNbAnnee());
+            
+            if (exp.getMetier() != null) {
+                Map<String, Object> metierMap = new HashMap<>();
+                metierMap.put("id", exp.getMetier().getId());
+                metierMap.put("libelle", exp.getMetier().getLibelle());
+                expMap.put("metier", metierMap);
+            }
+            
+            experiencesList.add(expMap);
+        }
+        candidatMap.put("experiences", experiencesList);
+        
+        // Candidatures avec détails complets
+        List<Map<String, Object>> candidaturesList = new ArrayList<>();
+        for (Candidature cand : c.getCandidatures()) {
+            Map<String, Object> candMap = new HashMap<>();
+            candMap.put("id", cand.getId());
+            candMap.put("dateCandidature", cand.getDateCandidature());
+            candMap.put("statut", cand.getStatut());
+            
+            // Informations sur le besoin associé
+            if (cand.getBesoin() != null) {
+                Map<String, Object> besoinMap = new HashMap<>();
+                besoinMap.put("id", cand.getBesoin().getId());
+                besoinMap.put("statut", cand.getBesoin().getStatut());
+                besoinMap.put("minAge", cand.getBesoin().getMinAge());
+                besoinMap.put("maxAge", cand.getBesoin().getMaxAge());
+                besoinMap.put("nbPosteDispo", cand.getBesoin().getNbPosteDispo());
+                besoinMap.put("minExperience", cand.getBesoin().getMinExperience());
+                besoinMap.put("coeffAge", cand.getBesoin().getCoeffAge());
+                besoinMap.put("coeffExperience", cand.getBesoin().getCoeffExperience());
+                
+                // Métier du besoin
+                if (cand.getBesoin().getMetier() != null) {
+                    Map<String, Object> metierMap = new HashMap<>();
+                    metierMap.put("id", cand.getBesoin().getMetier().getId());
+                    metierMap.put("libelle", cand.getBesoin().getMetier().getLibelle());
+                    besoinMap.put("metier", metierMap);
+                }
+                
+                // Département du besoin
+                if (cand.getBesoin().getDepartement() != null) {
+                    Map<String, Object> deptMap = new HashMap<>();
+                    deptMap.put("id", cand.getBesoin().getDepartement().getId());
+                    deptMap.put("libelle", cand.getBesoin().getDepartement().getLibelle());
+                    besoinMap.put("departement", deptMap);
+                }
+                
+                candMap.put("besoin", besoinMap);
+            }
+            
+            // Entretiens associés (si existent)
+            if (cand.getEntretiens() != null && !cand.getEntretiens().isEmpty()) {
+                List<Map<String, Object>> entretiensList = new ArrayList<>();
+                for (Entretien ent : cand.getEntretiens()) {
+                    Map<String, Object> entMap = new HashMap<>();
+                    entMap.put("id", ent.getId());
+                    entMap.put("dateHeureDebut", ent.getDateHeureDebut());
+                    entretiensList.add(entMap);
+                }
+                candMap.put("entretiens", entretiensList);
+            }
+            
+            candidaturesList.add(candMap);
+        }
+        candidatMap.put("candidatures", candidaturesList);
+
+        // Ajouter des métadonnées
+        Map<String, Object> result = new HashMap<>();
+        result.put("success", true);
+        result.put("candidat", candidatMap);
+        result.put("timestamp", LocalDateTime.now());
+        
+        return result;
+    }
 
     public Candidat findByEmail(String email) throws MyException {
         return candidatRepository.findByEmail(email)

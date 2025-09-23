@@ -18,7 +18,13 @@ public class MetierService {
     }
 
     public List<Metier> getAll() {
-        return metierRepository.findAll();
+        List<Metier> metiers = metierRepository.findAll();
+        for (Metier metier : metiers) {
+            metier.setBesoins(null);
+            metier.setQuestions(null);
+            metier.setExperiences(null);
+        }
+        return metiers;
     }
 
     public Metier getById(Integer id) {

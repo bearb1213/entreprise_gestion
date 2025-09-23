@@ -15,7 +15,7 @@ public class CompetenceController {
         this.competenceService = competenceService;
     }
 
-    @GetMapping("/api/public/competences")
+    @GetMapping("/api/competences")
     // GET /api/competences -> renvoie la liste de toutes les compétences
     public List<Competence> getAllCompetences() {
         return competenceService.getAll();

@@ -5,6 +5,8 @@ import lombok.NoArgsConstructor;
 import lombok.AllArgsConstructor;
 import jakarta.persistence.*;
 import java.util.List;
+import com.fasterxml.jackson.annotation.JsonIgnore;
+
 
 @Entity
 @Table(name = "langue")
@@ -19,8 +21,10 @@ public class Langue {
     private String libelle;
     
     @ManyToMany(mappedBy = "langues" , fetch = FetchType.LAZY)
+    @JsonIgnore
     private List<Candidat> candidats;
     
+    @JsonIgnore
     @OneToMany(mappedBy = "langue", fetch = FetchType.LAZY)
     private List<BesoinLangue> besoinLangues;
 }
