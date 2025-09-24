@@ -10,6 +10,8 @@ import LogEmploye from './component/page/rh/LogEmloye.jsx';
 import CVList from './component/page/rh/CVList.jsx';
 import Annonce from './component/page/rh/Annonce.jsx';
 import FormAnnonce from './component/page/rh/FormAnnonce.jsx';
+import CVListAnnonce from './component/page/rh/CVListAnnonce.jsx';
+import CVProgression from './component/page/rh/CVProgression.jsx';
 
 function App() {
   const location = useLocation(); 
@@ -34,10 +36,12 @@ function App() {
       <div className={`flex-1 overflow-auto p-6 ${showSidebar ? 'ml-64' : ''}`}>
         <Routes>
           <Route path='/' element={<LogEmploye navigate={navigate}  />} />
-          <Route path='/Cv' element={<Cv navigate={navigate} />} />
+          <Route path='/Cv/:id' element={<Cv navigate={navigate} />} />
+          <Route path='/Cv/:idCandidat/:idBesoin' element={<CVProgression navigate={navigate} />} />
           <Route path='/profile' element={<FormCandidat navigate={navigate} />} />
           <Route path='/dashboard' element={<Dashboard navigate={navigate} />} />
           <Route path='/CvList' element={<CVList  />} />
+          <Route path='/CvList/:id' element={<CVListAnnonce  />} />
           <Route path='/annonce' element={<Annonce  />} />
           <Route path='/formAnnonce' element={<FormAnnonce />} />
 

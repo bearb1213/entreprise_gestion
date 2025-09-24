@@ -4,8 +4,8 @@ import CVPreview from '../../template/CVPreview';
 import CompactCVPreview from '../../template/CompactCVPreview';
 import { useParams } from 'react-router-dom';
 
-const Cv = ({navigate}) => {
-    const {id} = useParams();
+const CVProgression = ({navigate}) => {
+    const {idCandidat , idBesoin} = useParams();
     
 
     const [cvData , setCvData] = useState(null);
@@ -70,6 +70,18 @@ const Cv = ({navigate}) => {
     },[cvData,charged])
 
 
+// return (
+//     <div className="min-h-screen bg-gray-100 py-8 px-4">
+//         <CompactCVPreview
+//         cvData={cvData}
+        
+//         />
+    
+//     </div>
+    
+// );
+
+
 
   return (
     <div className="min-h-screen bg-gray-100 py-8 px-4">
@@ -80,17 +92,9 @@ const Cv = ({navigate}) => {
         
         {charged && <CVTemplate cvData={cvData} />}
         
-        {/* Bouton d'impression */}
-        <div className="text-center mt-6">
-          <button
-            onClick={() => window.print()}
-            className="bg-blue-600 text-white px-6 py-3 rounded-lg hover:bg-blue-700 transition-colors"
-          >
-            📄 Imprimer le CV
-          </button>
-        </div>
+        
         <div className='fixed bottom-4 left-4'>
-            <a href="/dashboard" className="bg-blue-500 text-white px-6 py-3 rounded-lg hover:bg-blue-700 transition-colors">
+            <a href={`/CvList/${idBesoin}`} className="bg-blue-500 text-white px-6 py-3 rounded-lg hover:bg-blue-700 transition-colors">
                 retour
             </a>
         </div>
@@ -100,4 +104,4 @@ const Cv = ({navigate}) => {
  );
 };
 
-export default Cv;
+export default CVProgression;

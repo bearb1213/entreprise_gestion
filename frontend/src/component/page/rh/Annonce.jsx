@@ -52,7 +52,7 @@ const Annonce = () => {
         <CompactAnnonceCard key={annonce.id} annonce={annonce} />
       ))}
         <div className="fixed bottom-8 right-8">
-                <Link to="/profile">
+                <Link to="/formAnnonce">
                 <button
                 className="bg-blue-600 text-white p-4 rounded-full shadow-lg hover:bg-blue-700 transition-colors flex items-center justify-center"
                 >
