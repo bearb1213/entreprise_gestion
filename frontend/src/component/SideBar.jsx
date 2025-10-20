@@ -34,41 +34,118 @@ const LogoutIcon = () => (
   </svg>
 );
 
-export default function SideBar({ active = "Dashboard", roles = null }) {
+export default function SideBar({ active = "Dashboard", role = null }) {
   const navigate = useNavigate();
   const [activeItem, setActiveItem] = useState(active);
   const [menuItems, setMenuItems] = useState([]);
+  const [userInfo, setUserInfo] = useState(null);
+    const [loading, setLoading] = useState(true);
+    const [roles, setRoles] = useState(null);
+
+
+    const getUserRole = async () => {
+        if (!userInfo || !userInfo.roles) return null;
+
+        // Extract role from authorities (assuming roles are in the format "ROLE_XXX")
+        const authorities = userInfo.roles;
+        if (Array.isArray(authorities)) {
+            const roleAuthority = authorities.find(auth =>
+                auth.authority && auth.authority.startsWith('ROLE_')
+            );
+            if (roleAuthority) {
+                return roleAuthority.authority.replace('ROLE_', '');
+            }
+        }
+
+        // Fallback to check the roles array directly
+        if (userInfo.roles.includes('ROLE_ADMIN')) return 'ADMIN';
+        if (userInfo.roles.includes('ROLE_DEPARTMENT')) return 'DEPARTMENT';
+        if (userInfo.roles.includes('ROLE_RH')) return 'RH';
+
+        return null;
+    };
 
   useEffect(() => {
+      const fetchUserInfo = async () => {
+          try {
+              const response = await fetch("http://localhost:8080/api/utilisateur/me", {
+                  credentials: "include"
+              });
+
+              if (response.ok) {
+                  const data = await response.json();
+                  setUserInfo(data);
+                  console.log("User info:", data);
+              } else {
+                  console.log("User not authenticated or session expired");
+                  setUserInfo(null);
+              }
+          } catch (error) {
+              console.error("Error fetching user info:", error);
+              setUserInfo(null);
+          } finally {
+              setLoading(false);
+          }
+      };
+
+      fetchUserInfo();
+      console.log("UserInfo dans sidebar :", userInfo);
+      setRoles(getUserRole());
+      console.log("Roles dans sidebar :", roles);
     if (roles == "ADMIN") {
       setMenuItems([
-        { id: 1, name: "Dashboard", path: "/dashboard", icon: DashboardIcon },
-        { id: 2, name: "Profile", path: "/profile", icon: ProfileIcon },
+        { id: 1, name: "Liste CV", path: "/CvList", icon: TasksIcon },
       ]);
-    } else if (roles == "DEPARTMENT_CHIEF") {
+    } else if (roles == "DEPARTEMENT") {
       setMenuItems([
-        { id: 1, name: "Dashboard", path: "/dashboard", icon: DashboardIcon },
-        { id: 2, name: "Profile", path: "/profile", icon: ProfileIcon },
-        { id: 4, name: "Settings", path: "/settings", icon: SettingsIcon },
+        { id: 1, name: "Dashboard", path: "/departement-dashboard", icon: DashboardIcon },
+        { id: 2, name: "Creer une annonce", path: "/creer-annonce", icon: ProfileIcon },
       ]);
     } else {
       setMenuItems([
         { id: 1, name: "Dashboard", path: "/dashboard", icon: DashboardIcon },
         { id: 2, name: "Profile", path: "/profile", icon: ProfileIcon },
+<<<<<<< Updated upstream
         { id: 3, name: "Tasks", path: "/tasks", icon: TasksIcon },
+=======
+>>>>>>> Stashed changes
       ]);
     }
-  }, [roles]);
+  }, []);
+
+
 
   const handleNavigation = (path, name) => {
     navigate(path);
     setActiveItem(name);
   };
 
+<<<<<<< Updated upstream
   const handleLogout = () => {
     // Add logout logic here
     console.log("User logged out");
     navigate("/login");
+=======
+  const handleLogout = async () => {
+    try {
+      // Appeler l'API de logout
+      const response = await fetch("http://localhost:8080/api/utilisateur/logout", {
+        method: 'POST',
+        credentials: "include"
+      });
+
+      if (response.ok) {
+        console.log("Déconnexion réussie");
+      } else {
+        console.error("Erreur lors de la déconnexion");
+      }
+    } catch (error) {
+      console.error("Erreur lors de la déconnexion:", error);
+    } finally {
+      // Rediriger vers la page de login dans tous les cas
+      navigate("/");
+    }
+>>>>>>> Stashed changes
   };
 
   return (

@@ -19,8 +19,9 @@ public class StatusCandidature {
     @Column(name = "date_entree")
     private LocalDateTime dateEntree;
     
-    @Column(name = "libelle", length = 50)
-    private String libelle;
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "evaluation_id", nullable = false)
+    private Evaluation evaluation;
     
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "candidature_id", nullable = false)

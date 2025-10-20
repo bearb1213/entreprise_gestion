@@ -20,7 +20,11 @@ public class Question {
     @Column(name = "intitule", length = 255)
     private String intitule;
     
+<<<<<<< Updated upstream
     @ManyToOne(fetch = FetchType.LAZY)
+=======
+    @ManyToOne(fetch = FetchType.EAGER)
+>>>>>>> Stashed changes
     @JoinColumn(name = "departement_id")
     private Departement departement;
     

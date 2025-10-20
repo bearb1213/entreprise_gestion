@@ -4,6 +4,7 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 import lombok.AllArgsConstructor;
 import jakarta.persistence.*;
+import java.time.LocalDateTime;
 
 @Entity
 @Table(name = "reponse_candidat")
@@ -22,4 +23,6 @@ public class ReponseCandidat {
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "choix_id")
     private Choix choix;
+
+    LocalDateTime dateHeure;
 }

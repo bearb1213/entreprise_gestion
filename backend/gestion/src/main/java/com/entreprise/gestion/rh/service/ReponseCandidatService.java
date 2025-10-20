@@ -16,5 +16,10 @@ public class ReponseCandidatService {
     {
         return reponseCandidatRepository.save(reponseCandidat);
     }
+<<<<<<< Updated upstream
     
 }
+=======
+
+}
+>>>>>>> Stashed changes

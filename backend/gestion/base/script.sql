@@ -185,6 +185,7 @@ CREATE TABLE reponse_candidat(
    id SERIAL,
    candidature_id INTEGER NOT NULL,
    choix_id INTEGER NOT NULL,
+   date_heure TIMESTAMP,
    PRIMARY KEY(id),
    FOREIGN KEY(candidature_id) REFERENCES candidature(id),
    FOREIGN KEY(choix_id) REFERENCES choix(id)
@@ -193,9 +194,12 @@ CREATE TABLE reponse_candidat(
 CREATE TABLE entretien(
    id SERIAL,
    date_heure_debut TIMESTAMP,
+   date_heure_fin TIMESTAMP,
+   rh_id INTEGER NOT NULL,
    candidature_id INTEGER NOT NULL,
    PRIMARY KEY(id),
-   FOREIGN KEY(candidature_id) REFERENCES candidature(id)
+   FOREIGN KEY(candidature_id) REFERENCES candidature(id),
+   FOREIGN KEY(rh_id) REFERENCES utilisateur(id)
 );
 
 CREATE TABLE experience(
@@ -222,9 +226,10 @@ CREATE TABLE notes(
 CREATE TABLE status_candidature(
    id SERIAL,
    date_entree TIMESTAMP,
-   libelle VARCHAR(50),
+   evaluation_id INTEGER NOT NULL,
    candidature_id INTEGER NOT NULL,
    PRIMARY KEY(id),
+   FOREIGN KEY(evaluation_id) REFERENCES evaluation(id),
    FOREIGN KEY(candidature_id) REFERENCES candidature(id)
 );
 

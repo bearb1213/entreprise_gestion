@@ -2,7 +2,10 @@ package com.entreprise.gestion.rh.dto;
 
 import java.util.List;
 
+<<<<<<< Updated upstream
 import com.entreprise.gestion.rh.model.Metier;
+=======
+>>>>>>> Stashed changes
 
 import lombok.AllArgsConstructor;
 import lombok.Getter;

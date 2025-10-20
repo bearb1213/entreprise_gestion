@@ -46,6 +46,6 @@ public class Candidat {
     @OneToMany(mappedBy = "candidat", fetch = FetchType.LAZY)
     private List<Candidature> candidatures = new ArrayList<>();
     
-    @OneToMany(mappedBy = "candidat", fetch = FetchType.LAZY)
+    @OneToMany(mappedBy = "candidat", fetch = FetchType.LAZY, cascade = CascadeType.ALL, orphanRemoval = true)
     private List<Experience> experiences = new ArrayList<>();
 }

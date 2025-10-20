@@ -15,4 +15,12 @@ public class ChoixService {
     {
         return choixRepository.findById(id).orElse(null);
     }
+<<<<<<< Updated upstream
+=======
+
+    public Choix saveChoix(Choix choix)
+    {
+        return choixRepository.save(choix);
+    }
+>>>>>>> Stashed changes
 }

@@ -3,7 +3,6 @@ package com.entreprise.gestion.rh.model;
 import jakarta.persistence.*;
 import lombok.*;
 
-import java.util.ArrayList;
 import java.util.List;
 
 @Entity
@@ -23,7 +22,7 @@ public class Besoin {
     @Column(name = "min_age")
     private Integer minAge;
     
-    @Column(name = "nb_poste_dsipo")
+    @Column(name = "nb_poste_dispo")
     private Integer nbPosteDispo;
     
     @Column(name = "coeff_age")
@@ -43,18 +42,22 @@ public class Besoin {
     private Metier metier;
     
     @ManyToOne(fetch = FetchType.LAZY)
+<<<<<<< Updated upstream
     @JoinColumn(name = "departement_id", nullable = false)
+=======
+    @JoinColumn(name = "departement_id")
+>>>>>>> Stashed changes
     private Departement departement;
     
-    @OneToMany(mappedBy = "besoin", fetch = FetchType.LAZY)
-    private List<BesoinCompetence> besoinCompetences = new ArrayList<>();
+    @OneToMany(mappedBy = "besoin", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
+    private List<BesoinCompetence> besoinCompetences;
     
-    @OneToMany(mappedBy = "besoin", fetch = FetchType.LAZY)
-    private List<BesoinLangue> besoinLangues = new ArrayList<>();
+    @OneToMany(mappedBy = "besoin", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
+    private List<BesoinLangue> besoinLangues;
     
-    @OneToMany(mappedBy = "besoin", fetch = FetchType.LAZY)
-    private List<BesoinDiplomeFiliere> besoinDiplomeFilieres = new ArrayList<>();
+    @OneToMany(mappedBy = "besoin", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
+    private List<BesoinDiplomeFiliere> besoinDiplomeFilieres;
     
-    @OneToMany(mappedBy = "besoin", fetch = FetchType.LAZY)
-    private List<Candidature> candidatures = new ArrayList<>();
+    @OneToMany(mappedBy = "besoin", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
+    private List<Candidature> candidatures;
 }

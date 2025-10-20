@@ -22,4 +22,11 @@ public class Entretien {
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "candidature_id")
     private Candidature candidature;
+
+    @ManyToOne(fetch = FetchType.EAGER)
+    @JoinColumn(name = "rh_id")
+    private Utilisateur rh;
+
+    @Column(name = "date_heure_fin")
+    private LocalDateTime dateHeureFin;
 }
