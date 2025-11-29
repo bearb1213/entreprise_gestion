@@ -1,8 +1,7 @@
-package com.example.hr_backend.controller;
+package com.entreprise.gestion.rh.controller;
 
-import com.example.hr_backend.dto.ChatRequest;
-import com.example.hr_backend.dto.ChatResponse;
-import com.example.hr_backend.service.GroqChatService;
+import com.entreprise.gestion.rh.dto.*;
+import com.entreprise.gestion.rh.service.*;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 

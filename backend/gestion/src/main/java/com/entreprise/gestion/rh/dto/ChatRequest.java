@@ -1,4 +1,4 @@
-package com.example.hr_backend.dto;
+package com.entreprise.gestion.rh.dto;
 
 public class ChatRequest {
     private String message;

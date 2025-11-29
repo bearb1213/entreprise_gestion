@@ -1,6 +1,6 @@
-package com.example.hr_backend.service;
+package com.entreprise.gestion.rh.service;
 
-import com.example.hr_backend.dto.ChatRequest;
+import com.entreprise.gestion.rh.dto.*;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
